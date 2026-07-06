@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# check — the real-half check runner (dyad-aule).
+#
+# This is the *real* half of craft_invariants made computational (DYAD.md). Each task
+# deposits its acceptance criteria as an executable file in criteria/; this runner runs
+# them all and fails loud, naming what broke. The operator pays ONCE — writing the
+# criteria as runnable assertions — and grounding is then free on every run after.
+#
+#   ./check            # ground every task's criteria
+#
+# Exit 0 = real (all criteria hold); nonzero = NOT real (something is unverified).
+set -u
+root="$(cd "$(dirname "$0")" && pwd)"
+crit_dir="$root/criteria"
+shopt -s nullglob
+files=("$crit_dir"/[!_]*.sh)   # skip _lib.sh and other _-prefixed helpers
+if [ ${#files[@]} -eq 0 ]; then
+  echo "check: no criteria in $crit_dir — nothing to ground."
+  exit 0
+fi
+fail=0
+for f in "${files[@]}"; do
+  name="$(basename "$f" .sh)"
+  if out="$(bash "$f" 2>&1)"; then
+    echo "PASS  $name"
+    [ -n "$out" ] && echo "$out" | sed 's/^/      /'
+  else
+    fail=1
+    echo "FAIL  $name"
+    echo "$out" | sed 's/^/      /'
+  fi
+done
+echo
+if [ $fail -ne 0 ]; then
+  echo "check: NOT real — some acceptance criteria failed. Do not trust the turn."
+  exit 1
+fi
+echo "check: real — all acceptance criteria hold."
