@@ -1,0 +1,19 @@
+name: check
+
+# The real-half check, run on the REMOTE ground (not local-only). This closes the
+# local≠remote split-brain both peers hit (see dialectic/) and makes org-invariant O5 live:
+# acceptance criteria are executed automatically on every PR and on main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # criteria read commons/ — the registry entry must be present
+      - name: Run the real-half check
+        run: ./check

@@ -25,7 +25,15 @@ assert "O4: .gitignore present"               test -f .gitignore
 cruft="$(git ls-files | grep -Ei '(\.pyc$|__pycache__|\.DS_Store|\.tmp$|(^|/)scratch/|\.falsify-seen\.json$)' || true)"
 if [ -z "$cruft" ]; then echo "  ok   O4: no cruft tracked"; else echo "  MISS O4: cruft tracked: $cruft"; _fails=$((_fails+1)); fi
 
-# O5 — criteria are executable (this very run proves it). CI-wiring is a tracked GAP in the README.
-assert "O5: check runner present + executable" test -x check
+# O5 — criteria are executable AND wired into CI on every PR.
+# NB: assert the COMMITTED git mode (100755), not `test -x` — the working-tree bit can be present
+# while git stores 100644, which passes locally but fails on a fresh CI checkout (caught in CI, PR #6).
+assert "O5: check runner committed executable (git 100755)" \
+  bash -c '[ "$(git ls-files -s check | cut -d" " -f1)" = "100755" ]'
+assert "O5: CI workflow present"               bash -c "ls .github/workflows/*.yml >/dev/null 2>&1"
+assert "O5: CI runs the check"                 bash -c "grep -rqF './check' .github/workflows/"
+
+# O7 — public repo declares a license.
+assert "O7: LICENSE present"                    test -f LICENSE
 
 assert_done

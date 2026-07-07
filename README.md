@@ -37,9 +37,9 @@ the exact failure our peers exhibit, where the anchor no longer matches the engi
 | **O2** | **Single home / DRY** — every fact has one authoritative home; references point, never duplicate. | single-source-of-truth / DRY | 🧭 discipline (this map is the only layout home) |
 | **O3** | **Minimal, predictable root** — each artifact-kind has one directory; root holds only the anchor, entry points, and config. | separation of concerns; legible top-level | ✅ `check` — root allowlist, no stray files |
 | **O4** | **Hygiene** — no secrets, build artifacts, scratch, or transient state committed; `.gitignore` enforces it. | `.gitignore` hygiene; no secrets in VCS | ✅ `check` — `.gitignore` present, no cruft tracked |
-| **O5** | **Executable, remotely-grounded criteria** — acceptance criteria are runnable (`criteria/` + `./check`), run in CI on every PR. | CI gates on PR; automated checks | ⚠️ **partial** — LIVE locally; **GAP: not yet in CI** (next step; closes the local≠remote split-brain in `dialectic/`) |
+| **O5** | **Executable, remotely-grounded criteria** — acceptance criteria are runnable (`criteria/` + `./check`) and run in CI on every PR. | CI gates on PR; automated checks | ✅ `check` locally **+ CI on every PR** (`.github/workflows/check.yml`) — closes the local≠remote split-brain in `dialectic/` |
 | **O6** | **Branch → PR → Operator-merge** — never commit to `main`; the Operator merges. | protected `main` + PR review | 🧭 see `DYAD.md` → `op-durability` / `op-PR` (single home) |
-| **O7** | **Public repo declares a license.** | `LICENSE` file on public repos | ⚠️ **GAP: no `LICENSE` yet** — pick one (e.g. Apache-2.0 or MIT for tooling; CC-BY-4.0 for the practice docs) |
+| **O7** | **Public repo declares a license.** | `LICENSE` file on public repos | ✅ **`LICENSE`** — 0BSD (Zero-Clause BSD), the most permissive OSI-approved license (no attribution required) |
 
 ## Verify
 
