@@ -7,6 +7,12 @@
 > (macOS, Windows dyad operators) is in-regime. The decision was re-derived under the widened
 > regime and **held**, on a rewritten ground with new enforcement (3-OS CI matrix + shellcheck
 > gate). The record survives *changed*, which is what surviving falsification means.
+> **Second amendment (§8):** two further Operator objections factored — **substrate provenance**
+> (shell delegates to disparate-vendor utilities; python's stdlib is single-source with a declared
+> dependency mechanism) and **agent-maintainability** (python libraries are open-source, inside the
+> agent's read/patch loop; installed binaries are not). Conceded on the *harness-glue* axis, held on
+> the measured *ground* majority; glue gated by an executable denylist (C4); the §5 escape hatch
+> sharpened to **python3-stdlib** on exactly these two factors.
 > `submitter_dyad_id: dyad-aule · submitter_human: pltrinh1122`
 > **Built for falsification** — every claim carries a `falsification_target`; verdicts against this
 > record are welcome; the Operator's merge (or refusal) of the PR carrying it is the *right*-half
@@ -126,9 +132,13 @@ however ubiquitous — is a genuinely new axis here.*
 ## 5. Boundary discipline — the escape hatch and the tripwires
 
 The cheapest correct response to a structured-fact criterion is **not** migrating the primitive:
-a `criteria/<task>.sh` file may shell out to `python3` (or the Commons' own validators) for the
-structured sub-check, keeping the `.sh` file as the assertion frame. The *frame* migrates only if
-the assert-line shape itself stops fitting the corpus.
+a `criteria/<task>.sh` file may shell out to **`python3` — stdlib only** (or the Commons' own
+validators) for the structured sub-check, keeping the `.sh` file as the assertion frame. The *frame*
+migrates only if the assert-line shape itself stops fitting the corpus. The hatch is
+python3-*stdlib* specifically, on the Operator's §8 factors: single-source versioned semantics
+(provenance) and open-source, in-language code the agent can read and patch (maintainability) —
+which is also why the hatch is *not* a third-party binary in the jq/yq style: that would import the
+disparate-vendor problem under a new name, plus a supply chain.
 
 Revisit triggers — each is checkable, and hitting one obliges a revisit of this record, not a quiet
 workaround:
@@ -144,6 +154,11 @@ workaround:
    is now *proven continuously* (3-OS CI matrix + shellcheck gate); the new tripwire is **a matrix
    leg that cannot be made green without weakening a criterion** — that would mean the portable
    subset can't carry the claim-shape, and the primitive must be revisited.
+5. **A needed vendor-divergent construct** (C4 target, §8): the first time a criterion *needs* a
+   utility flag on the denylist (or a non-POSIX text idiom) to state its claim, the glue has
+   outgrown the POSIX floor — open the python3-stdlib hatch for that criterion; a second such
+   revisits the primitive. Likewise if the **glue share grows**: the §8 inventory is re-runnable;
+   ground(git/gh)-to-glue drifting toward glue-major is the balance shifting under the decision.
 
 ## 6. Consequences (accepted, eyes open)
 
@@ -198,3 +213,60 @@ the real-half check runs on a ubuntu/macos/windows CI matrix, and the whole shel
 `env bash` may resolve to a newer brew bash on macOS), not every operator's laptop. It is the best
 continuously-payable proxy; a lived report from an actual macOS/Windows dyad operator outranks it
 and is invited — as a DM or an issue.
+
+## 8. Second falsification pass — substrate provenance & agent-maintainability (Operator, 2026-07-07)
+
+**The objections, steelmanned.**
+1. *Provenance:* a shell line's real dependencies are the utilities it invokes — and those come
+   from **disparate sources** (GNU, BSD, MSYS) with divergent flags and no declaration or version
+   mechanism: you cannot write `grep >= GNU 3.0`. Python's stdlib is **single-source** (CPython),
+   versioned with the interpreter, documented with a deprecation policy; `import` is a *declared*
+   dependency, and pip/lockfiles version anything beyond. The fragility bash's simplicity hides is
+   outsourced to an unpinnable substrate.
+2. *Agent-maintainability:* python's libraries are **open-source, in-language text** — inside the
+   agent's read/patch/vendor/pin loop; a dyad's agent can fix its own dependency. An installed
+   `/usr/bin/grep` is a compiled vendor binary **outside** that loop: when it misbehaves, the only
+   fix is a workaround in the script, never a fix in the dependency.
+
+**The measured decomposition (what the objections hit).** Inventory of every external invocation
+in the shell corpus (`check`, `criteria/*.sh`, `bin/*`, `.githooks/*`), re-runnable:
+
+- **Ground — 169 invocations (git 131, gh 38):** the facts under test *are* git facts. git/gh are
+  single-upstream, open-source, semantically identical on all three platforms — provenance-wise
+  they are to this corpus what the stdlib is to python. And they are invocations **python could not
+  remove**: a python harness would `subprocess` to the same binaries (or adopt GitPython/dulwich —
+  a third-party reimplementation of the ground, strictly worse for fidelity).
+- **Harness glue — ~75 invocations, sharply Zipf-tailed:** grep 58 (POSIX flags only: `-q -c -E
+  -F -i`), then single digits: sed 6, cut 4, tr 3, basename 3, mktemp 2, wc/sort/paste/head/awk
+  1 each. A vendor-divergent-construct scan (`sed -i`, `grep -P`, `date -d`, `stat -`,
+  `readlink -f`, `sort -V`, `echo -n/-e`, `xargs -d`, `realpath`) found **zero** hits.
+
+**Conceded.** On the glue axis the objections are right and the record now says so: python's
+re/str/pathlib would be single-source and agent-patchable where grep/sed/tr are not. Both factors
+are adopted as the *reason the §5 escape hatch is python3-stdlib specifically* (not jq/yq-style
+third-party binaries, which re-import disparate vendors plus a supply chain). Note the
+maintainability virtue also cuts back once past stdlib: an agent-manageable ecosystem *invites*
+dependencies, and a fidelity instrument wants the smallest maintainable surface — ideally none.
+
+**Held.** The corpus is ground-major (169 vs ~75), the glue is a POSIX-floor Zipf tail with zero
+divergent constructs, and — decisive for provenance — the 3-OS matrix **already exercises the
+disparate vendors per push**: ubuntu = GNU, macos = BSD, windows = MSYS. We cannot pin the
+substrate, so we do the two things that dominate pinning for a corpus this small: *shrink the
+exposed surface to the POSIX intersection* (denylist, below) and *test the actual vendor triple
+continuously* (matrix).
+
+**C4 — glue containment.** *The shell corpus's undeclared utility dependencies are held to the
+POSIX intersection: no vendor-divergent construct appears, and the claim is enforced by an
+executable denylist gate, not review.*
+- evidence: the denylist assert in `criteria/criteria-primitive.sh` (runs in `./check`, thus on
+  all three vendor legs); the inventory above.
+- falsification_target: a glue bug that **ships through both gates** — a criterion behaving
+  differently across vendors despite being denylist-clean and matrix-green (the POSIX intersection
+  itself proving unsound for the used subset); OR the first criterion that *needs* a denylisted
+  construct to state its claim (tripwire 5 — the glue outgrowing the floor).
+
+**Verdict on the decision after this pass:** held, narrower and better-armed — bash remains the
+frame because the corpus is mostly *ground* (single-source git) and its glue is small, POSIX-floor,
+vendor-tested, and now gated; python-stdlib is the codified overflow the moment either stops being
+true. The Operator's two factors did not flip the decision; they **priced it** — and set the exact
+meters (tripwire 5, C4's targets) that will flip it when the corpus changes shape.

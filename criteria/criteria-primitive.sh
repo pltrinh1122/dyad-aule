@@ -29,6 +29,21 @@ assert "portable-subset gate wired (shellcheck over the corpus)" grep -q 'shellc
 assert "corpus is shellcheck-clean at warning severity (skips if no shellcheck; CI gate still fires)" \
   bash -c 'if command -v shellcheck >/dev/null 2>&1; then shellcheck -S warning check criteria/*.sh bin/git bin/gh bin/d-start bin/_dyad-rt bin/_reconcile .githooks/pre-commit .githooks/pre-push; fi'
 
+# --- §8 substrate provenance & agent-maintainability: the glue is GATED, not trusted (C4) ---
+# The corpus cannot pin its utility substrate (GNU/BSD/MSYS), so it holds the POSIX intersection:
+# no vendor-divergent construct may appear. This gate runs under ./check on all three vendor legs.
+DENY='sed -i|grep -P|date -d|stat -[cf]|readlink -f|sort -V|echo -n|echo -e|xargs -d|realpath'
+CORPUS="check criteria/*.sh bin/git bin/gh bin/d-start bin/_dyad-rt bin/_reconcile .githooks/pre-commit .githooks/pre-push"
+glue_gate() {
+  # shellcheck disable=SC2086  # CORPUS is a deliberate word-split file list
+  ! grep -nE "$DENY" $CORPUS | grep -v "DENY="   # the DENY= line itself is the one sanctioned hit
+}
+assert "C4: no vendor-divergent construct in the shell corpus"   glue_gate
+assert "records the provenance objection (disparate sources)"    grep -qiE 'substrate provenance' "$DR"
+assert "records the agent-maintainability objection"             grep -qiE 'agent-maintainab' "$DR"
+assert "carries C4 with the ground/glue decomposition"           grep -qF 'C4 — glue containment' "$DR"
+assert "escape hatch sharpened to python3-stdlib"                grep -qF 'stdlib only' "$DR"
+
 # --- The tree matches the decision (the record's claim made real, O2: record points, tree proves) ---
 assert "every criteria file is *.sh (frame holds)" \
   bash -c '[ -z "$(git ls-files "criteria/*" | grep -v "\.sh$" | grep -v README)" ]'
