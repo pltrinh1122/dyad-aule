@@ -47,6 +47,27 @@ becomes self-deriving — every later node benefits), then **N3**, then **N5/N6*
 independent). **N2 runs on the Operator's clock**, not the agent's WIP — disposing it any time
 unblocks N4 (conditionally) and, with N3, the commission itself (N7).
 
+## Why the nodes are not GitHub issues (Operator probe, 2026-07-07)
+
+Probed: shouldn't nodes be gh-issues for off-device durability and single source of truth?
+Decided: **no — the plan file is the node home**, on grounds already ratified in our dialectic:
+
+- **Durability is equal.** Pushed/merged, this file lives on GitHub — same off-device class as
+  issues, plus full version history.
+- **Single-SoT favors the file.** Issues would add a *second writer* beside the repo — the exact
+  split that gave dyad-wu-wei three coexisting "active" pointers (labels-as-SoT, local drift, sync
+  discarding edits — `dialectic/2026-07-06-concurrency-fsm-evaluation.md` C2, `retro-1793`).
+- **Issue state is stored and UI-mutable** — open/closed is a status flag a click can flip. Node
+  state here is **derived** (criteria-on-main ∧ check-green); no click can fake it (C3).
+- **The merge-gate holds.** Replanning is a PR the Ratifier seals; issue edits bypass the
+  Operator's gate entirely.
+- **`./check` can reach the file** — the DAG's shape is re-proven on every merge, on all three OS
+  legs. Issues are API objects outside the criteria's ground.
+- **Conceded (the probe's real find):** issues excel as an **async intent inbox** — filed from
+  anywhere, no git client, exactly G0's "intent needs somewhere durable to land mid-execution."
+  Sanctioned future option for N3's intake: *issue = proposed intent → d-commission → ratified
+  node via PR.* **Inbox, never truth.**
+
 ## Deliberately absent
 
 - **G3/G4/G6 nodes** (behavioral real-half, run-and-observe, dependency hygiene): stack-dependent;
