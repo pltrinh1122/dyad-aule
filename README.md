@@ -22,7 +22,7 @@ Each artifact-kind has exactly **one home**. A fact lives in one place; cross-re
 | `criteria/` | checks | executable acceptance criteria (one file per task) |
 | `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), the boundary enforcer (`_dyad-rt`), and the Start Session Discipline (`d-start`, with its internal `_reconcile` helper). Internal scripts carry the `_` prefix (O9). |
 | `.githooks/` | runtime floor | git-hook hard floor (`pre-commit`, `pre-push`) — refuses main-mutations even on raw `git` |
-| `retro/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) |
+| `reflect/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) — the home of SPAOR's closing **Reflect** phase (`commons/AGENT.md`). *Term `retro` deprecated 2026-07-07.* |
 | `dialectic/` | reports | falsifiable reports & cross-dyad analysis (the published home for claims) |
 | `dm/` | messages | outbound Dyad Messages, sender-hosted at `dm/<recipient>/` |
 | `commons/` | form (submodule) | the shared Dyad-Practice Commons |

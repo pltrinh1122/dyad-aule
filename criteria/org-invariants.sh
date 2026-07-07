@@ -10,15 +10,18 @@ cd "$repo"
 assert "O1: root README.md exists"            test -f README.md
 
 # O3 — minimal, predictable root: every tracked top-level entry is allowlisted.
-ALLOW=" .gitignore .gitmodules CLAUDE.md DYAD.md README.md LICENSE check commons criteria dialectic dm retro .github bin .githooks "
+ALLOW=" .gitignore .gitmodules CLAUDE.md DYAD.md README.md LICENSE check commons criteria dialectic dm reflect .github bin .githooks "
 stray=""
 for e in $(git ls-files | sed 's#/.*##' | sort -u); do
   case "$ALLOW" in *" $e "*) : ;; *) stray="$stray $e" ;; esac
 done
 if [ -z "$stray" ]; then echo "  ok   O3: root minimal (no stray entries)"; else echo "  MISS O3: stray root entries:$stray"; _fails=$((_fails+1)); fi
 
-# O3 — each declared artifact-kind has its home.
-for d in criteria retro dialectic dm; do assert "O3: kind-home $d/ present" test -d "$d"; done
+# O3 — each declared artifact-kind has its home. `reflect/` is the SPAOR Reflect phase's ledger
+# (Operator deprecated the term `retro`, 2026-07-07); the tombstone assert keeps the old home from
+# silently coming back on a stale-branch merge.
+for d in criteria reflect dialectic dm; do assert "O3: kind-home $d/ present" test -d "$d"; done
+assert "O3: deprecated kind-home retro/ absent (renamed reflect/)" bash -c '[ ! -d retro ] && [ -z "$(git ls-files retro/)" ]'
 
 # O4 — hygiene: .gitignore present and no cruft tracked.
 assert "O4: .gitignore present"               test -f .gitignore
