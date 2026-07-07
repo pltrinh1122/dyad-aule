@@ -1,0 +1,18 @@
+# Local Claude Code settings (per-machine, not shared)
+.claude/settings.local.json
+
+# DM read-state — per-consumer, NEVER in the ledger (see commons/dm/PROTOCOL.md)
+.falsify-seen.json
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Scratch / transient
+scratch/
+tmp/
+*.tmp
