@@ -31,6 +31,14 @@ assert "anchor names op-SoT"                             grep -qF 'op-SoT' "$A"
 assert "vocabulary carries 'inbox, never truth'"         grep -qF 'inbox, never truth' "$A"
 assert "plan records the issues decision (the source)"   grep -qF 'Inbox, never truth' plan/close-the-gaps.md
 
+# --- op-intent: anchored (survivor wording) + its record carries the falsification ---
+assert "anchor names op-intent"                          grep -qF 'op-intent' "$A"
+assert "anchor states the two intent states"             bash -c "grep -qF 'ratified' '$A' && grep -qiE 'novel normative ground' '$A'"
+assert "anchor carries the Sense-turn framing (SPAOR)"   grep -qF 'Sense turns' "$A"
+assert "anchor carries the one-way ratchet"              grep -qiE 'never loosens its own gate' "$A"
+assert "record exists with survivor + falsification"     bash -c "grep -qF 'The survivor' dialectic/2026-07-07-learning-invariant-intent-first.md && grep -c 'falsification_target:' dialectic/2026-07-07-learning-invariant-intent-first.md | grep -qE '^[3-9]'"
+assert "record dog-foods its own Interpretation block"   grep -qF 'Interpretation block (this record dog-foods' dialectic/2026-07-07-learning-invariant-intent-first.md
+
 # --- SPAOR kind-home naming (ontology #7) ---
 assert "ontology names the SPAOR kind-home rule"         bash -c "grep -qF 'SPAOR phase' '$A'"
 assert "vocabulary defines plan-node / frontier"         grep -qF 'plan-node / frontier' "$A"
