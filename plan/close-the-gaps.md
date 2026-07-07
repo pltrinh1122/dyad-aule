@@ -37,15 +37,18 @@ NODE N4 deps=N2 done=rt-bootstrap.sh lane=agent :: dyad-rt bootstrap — propaga
 NODE N5 deps=N0 done=pr-experience.sh lane=agent :: Right-half experience path — commission PRs must carry "how to see it working" (G5)
 NODE N6 deps=N0 done=telos-metering.sh lane=agent :: Telos metering — reflect/ ledger convention: turns-to-spine / turns-to-criteria / rework, per node (G7)
 NODE N7 deps=N2,N3 done=commission-1-intake.sh lane=dyad :: First commission intake — Operator supplies a real brief; d-commission runs; G3/G4/G6 decompose into NEW nodes against the real stack (not pre-specced here — form waits for the spine)
+NODE N8 deps=N0 done=provenance.sh lane=agent :: op-provenance enforcement — no Act without ingested intent: every commit carries a Node:<id> trailer resolving to this plan (intake=#issue permitted inside nodes, per inbox-never-truth); enforced at the dyad-rt floor (bin/_dyad-rt check-provenance + pre-commit), sanctioned-exempt classes (d-start repair, reconcile grounding, Operator merges); d-start surfaces untraced commits as a seam; the op-provenance anchor entry lands WITH this mechanism, never before it (no asserted-but-unwired invariant)
 
 DISPOSITION N2: TODO
 
 ## Recommended pick order (proposal — the frontier is the fact, this is the preference)
 
-Once N0 merges, the frontier is {N1, N2, N3, N5, N6}. Recommended: **N1 first** (the queue
-becomes self-deriving — every later node benefits), then **N3**, then **N5/N6** (small,
-independent). **N2 runs on the Operator's clock**, not the agent's WIP — disposing it any time
-unblocks N4 (conditionally) and, with N3, the commission itself (N7).
+Once N0 merges, the frontier is {N1, N2, N3, N5, N6, N8}. Recommended: **N1 first** (the queue
+becomes self-deriving — every later node benefits), then **N8** (the provenance floor — from it
+onward every node's work is traced, closing the SPAOR bypass the Operator probed 2026-07-07),
+then **N3**, then **N5/N6** (small, independent). **N2 runs on the Operator's clock**, not the
+agent's WIP — disposing it any time unblocks N4 (conditionally) and, with N3, the commission
+itself (N7).
 
 ## Why the nodes are not GitHub issues (Operator probe, 2026-07-07)
 
