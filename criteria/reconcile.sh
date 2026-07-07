@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Acceptance criteria for bin/reconcile — the safe start-of-session reconcile.
+# Acceptance criteria for bin/_reconcile — the safe start-of-session reconcile.
 # This routine SWITCHES HEAD and DELETES branches, so asserting it in prose is not enough (fidelity):
 # each scenario builds a THROWAWAY git repo (bare origin + work clone, all file:// — no network) and
-# drives the REAL bin/reconcile against it, asserting the safety envelope holds. Nothing here touches
+# drives the REAL bin/_reconcile against it, asserting the safety envelope holds. Nothing here touches
 # the actual dyad-aule repo — every scenario runs inside its own mktemp fixture with cwd set to it.
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
-RECON="$repo/bin/reconcile"
+RECON="$repo/bin/_reconcile"
 
 # Build a fresh work repo on 'main', pushed to a bare origin. Echoes the temp root.
 _mkfix() {
@@ -90,8 +90,8 @@ scen_behind_ffpull() {
   [ "$lc" = "$rc" ]
 }
 
-assert "committed executable (git 100755): bin/reconcile" \
-  bash -c '[ "$(cd "'"$repo"'" && git ls-files -s bin/reconcile | cut -d" " -f1)" = "100755" ]'
+assert "committed executable (git 100755): bin/_reconcile" \
+  bash -c '[ "$(cd "'"$repo"'" && git ls-files -s bin/_reconcile | cut -d" " -f1)" = "100755" ]'
 assert "dirty tree → STOP (no switch/delete, changes intact)" scen_dirty
 assert "merged branch → fresh main + branch deleted"          scen_merged_cleanup
 assert "unmerged backed-up WIP → on main, branch PRESERVED"   scen_unmerged_preserved

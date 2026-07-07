@@ -47,4 +47,17 @@ for f in $(git ls-files 'bin/d-*' 'criteria/d-*.sh'); do
 done
 if [ -z "$strayd" ]; then echo "  ok   O8: d-* prefix only on operator disciplines"; else echo "  MISS O8: d-* on non-operator (internal) file(s):$strayd — rename without the d- prefix"; _fails=$((_fails+1)); fi
 
+# O9 — internal bin/ scripts (not Operator-invoked) carry the `_` prefix (Operator convention,
+# 2026-07-07; industry `_private` idiom). Public bin/ entry points are allowlisted; every other tracked
+# bin/ file must start with `_`. (git/gh keep their names to shadow the real tools; claude launches;
+# d-start is the Operator's token.)
+BIN_PUBLIC=" claude git gh d-start "
+strayi=""
+for f in $(git ls-files 'bin/*'); do
+  b="$(basename "$f")"
+  case "$b" in _*) continue ;; esac
+  case "$BIN_PUBLIC" in *" $b "*) : ;; *) strayi="$strayi $f" ;; esac
+done
+if [ -z "$strayi" ]; then echo "  ok   O9: internal bin/ scripts carry the _ prefix"; else echo "  MISS O9: bin/ file(s) neither public nor _-prefixed:$strayi — prefix internal scripts with _"; _fails=$((_fails+1)); fi
+
 assert_done

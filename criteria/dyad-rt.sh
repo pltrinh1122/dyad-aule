@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Acceptance criteria for dyad-rt — the Dyad Runtime (bin/dyad-rt enforcer + .githooks floor +
+# Acceptance criteria for dyad-rt — the Dyad Runtime (bin/_dyad-rt enforcer + .githooks floor +
 # bin/git·bin/gh wrappers + bin/claude launcher). This is the real-half of the runtime: a guard
 # that is asserted but not wired is counterfeit (the failure aule's dialectic/ pins on peers). So
 # this file DRIVES the enforcer and asserts it both REFUSES main-mutations AND ALLOWS a working-
@@ -7,7 +7,7 @@
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
 cd "$repo"
-rt="$repo/bin/dyad-rt"
+rt="$repo/bin/_dyad-rt"
 
 # --- The enforcer fires: DENIES the forbidden mutations (exit nonzero). ---
 assert "deny: commit on main"        bash -c '! "'"$rt"'" check-branch main'
@@ -26,11 +26,11 @@ assert "single source: protected == main"    bash -c '[ "$("'"$rt"'" protected)"
 # --- The floor and wrappers exist, are committed executable (git 100755 — the O5/PR#6 lesson:
 #     a working-tree +x bit can mask a 100644 in git that then fails on a fresh CI checkout),
 #     and route through the single-home enforcer (not a private copy of the policy). ---
-for s in bin/dyad-rt bin/git bin/gh bin/claude .githooks/pre-commit .githooks/pre-push; do
+for s in bin/_dyad-rt bin/git bin/gh bin/claude .githooks/pre-commit .githooks/pre-push; do
   assert "committed executable (git 100755): $s" \
     bash -c '[ "$(git ls-files -s "'"$s"'" | cut -d" " -f1)" = "100755" ]'
 done
-# (tolerate the shell quoting between `dyad-rt"` and the subcommand, e.g. `"$root/bin/dyad-rt" check-branch`).
+# (tolerate the shell quoting between `dyad-rt"` and the subcommand, e.g. `"$root/bin/_dyad-rt" check-branch`).
 assert "floor delegates to enforcer: pre-commit" grep -qE 'dyad-rt"? check-branch' .githooks/pre-commit
 assert "floor delegates to enforcer: pre-push"   grep -qE 'dyad-rt"? check-push'   .githooks/pre-push
 assert "wrapper delegates to enforcer: bin/git"  grep -qE 'dyad-rt"? check-(branch|push)' bin/git

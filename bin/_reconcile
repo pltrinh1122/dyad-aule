@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/reconcile — safe start-of-session reconcile to a clean baseline (the reconcile half of d-start).
+# bin/_reconcile — safe start-of-session reconcile to a clean baseline (the reconcile half of d-start).
 #
 # WHY: we are not guaranteed to LEAVE or RESTART clean — a session can crash mid-branch, or a PR can
 #   merge remotely while we were away. Left unmechanized, this became a hand-run "cleanup" (switch to
@@ -19,14 +19,14 @@
 #   Operator disposition (2026-07-07): auto-push + auto-reconcile the safe cases; report every action.
 #
 # It operates on the git repo at the CURRENT WORKING DIRECTORY (so it is testable against a fixture).
-# The protected branch name is read from the single source, `bin/dyad-rt protected`.
+# The protected branch name is read from the single source, `bin/_dyad-rt protected`.
 #
-# Usage:  bin/reconcile            # reconcile the cwd repo to a clean baseline (acts, reports each act)
-#         bin/reconcile --dry-run  # read-only: report the plan, touch nothing (no fetch/push/switch/delete)
+# Usage:  bin/_reconcile            # reconcile the cwd repo to a clean baseline (acts, reports each act)
+#         bin/_reconcile --dry-run  # read-only: report the plan, touch nothing (no fetch/push/switch/delete)
 # Exit:   0 = reconciled (or nothing to do) · 1 = surfaced a blocking seam (dirty / push failed)
 set -uo pipefail
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MAIN="$("$SELF/dyad-rt" protected 2>/dev/null || echo main)"
+MAIN="$("$SELF/_dyad-rt" protected 2>/dev/null || echo main)"
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 
 say() { printf '%s\n' "$1"; }

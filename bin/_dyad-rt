@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/dyad-rt — the Dyad Runtime enforcer (dyad-aule).
+# bin/_dyad-rt — the Dyad Runtime enforcer (dyad-aule).
 #
 # WHAT: the single home for dyad-aule's runtime boundary policy. Every guard decision —
 #   "may this git/gh mutation proceed?" — is answered here and NOWHERE else. The .githooks
