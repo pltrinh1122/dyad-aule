@@ -38,7 +38,7 @@ NODE N5 deps=N0 done=pr-experience.sh lane=agent :: Right-half experience path �
 NODE N6 deps=N0 done=telos-metering.sh lane=agent :: Telos metering — reflect/ ledger convention: turns-to-spine / turns-to-criteria / rework, per node (G7)
 NODE N7 deps=N2,N3 done=commission-1-intake.sh lane=dyad :: First commission intake — Operator supplies a real brief; d-commission runs; G3/G4/G6 decompose into NEW nodes against the real stack (not pre-specced here — form waits for the spine)
 NODE N8 deps=N0 done=provenance.sh lane=agent :: op-provenance enforcement — no Act without ingested intent; binds ARTIFACT mutations only (durability carved out as state capture); path-derived commit classes + CI-level authority; full design in "N8 design notes" below
-NODE N9 deps=N1 done=node-mirror.sh lane=agent :: gh-issue projection of the plan — one issue per node, the Operator's shared-mental-model UI at zero agent-token cost: CI-driven one-way sync repo→issues from DERIVED node state; hand-edits reconciled back and surfaced; issue comments = intake inbox; a view, never a writer; design in "N9 design notes" below
+NODE N9 deps=N1 done=node-mirror.sh lane=agent :: Activity Board — kanban visibility via gh-issues + GitHub Projects v2 (Operator direction, 2026-07-07): one issue per node as the card, board columns DERIVED from node state, CI-driven one-way sync repo→board; hand-edits reconciled back and surfaced; issue comments = intake inbox; a view, never a writer; design in "N9 design notes" below
 
 DISPOSITION N2: TODO
 
@@ -75,6 +75,19 @@ DISPOSITION N2: TODO
 - **The inbox loop closes here:** issue *comments* and *new* Operator-filed issues are the
   sanctioned async intake (*inbox, never truth*) — consumed by intake (N3) into replanning PRs.
 - deps=N1 because projection needs mechanized node-state derivation to know what to mirror.
+- **Activity Board (Operator direction, 2026-07-07):** the visibility surface is a **kanban
+  board — GitHub Projects v2** — with node-issues as cards and **columns derived from node
+  state**, never dragged-as-truth:
+  `Blocked` (deps not DONE) · `Ready` (frontier) · `In Progress` (an open PR carries this node's
+  `Node:<id>` trailer — derivable once N8 lands, enriching but not gating the board) ·
+  `Awaiting Operator` (lane=operator, disposition TODO; or PR open awaiting merge) · `Done`
+  (derived DONE). A hand-dragged card is reconciled to its derived column on next sync and the
+  drift surfaced — same tripwire rule as the issues themselves.
+  - **WIP=1 made visible:** the In-Progress column holds at most one card by invariant; a second
+    card appearing is itself a surfaced seam.
+  - **Precondition (honest flag):** Projects v2 writes need a token with project scope (the
+    default Actions `GITHUB_TOKEN` cannot write user/org Projects) — an Operator-provisioned
+    secret is a setup step of N9's execution, named here so it isn't discovered mid-build.
 
 ## Recommended pick order (proposal — the frontier is the fact, this is the preference)
 
