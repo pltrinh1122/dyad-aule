@@ -37,9 +37,27 @@ NODE N4 deps=N2 done=rt-bootstrap.sh lane=agent :: dyad-rt bootstrap — propaga
 NODE N5 deps=N0 done=pr-experience.sh lane=agent :: Right-half experience path — commission PRs must carry "how to see it working" (G5)
 NODE N6 deps=N0 done=telos-metering.sh lane=agent :: Telos metering — reflect/ ledger convention: turns-to-spine / turns-to-criteria / rework, per node (G7)
 NODE N7 deps=N2,N3 done=commission-1-intake.sh lane=dyad :: First commission intake — Operator supplies a real brief; d-commission runs; G3/G4/G6 decompose into NEW nodes against the real stack (not pre-specced here — form waits for the spine)
-NODE N8 deps=N0 done=provenance.sh lane=agent :: op-provenance enforcement — no Act without ingested intent, where "mutate" = ARTIFACT mutations only (Operator strike, 2026-07-07): durability is carved out as a class — state-capture for resume (WIP checkpoints, reconcile grounding, d-start repair) is Observe-phase capture, not an Act, and needs no Sense lineage. Artifact-mutating commits carry a Node:<id> trailer resolving to this plan (intake=#issue permitted inside nodes, per inbox-never-truth); enforced at the dyad-rt floor (bin/_dyad-rt check-provenance + pre-commit) with state-capture commits declaring themselves as such (the declaration is visible, like --no-verify); Operator merges exempt; d-start surfaces untraced artifact commits as a seam; the op-provenance anchor entry lands WITH this mechanism, never before it (no asserted-but-unwired invariant)
+NODE N8 deps=N0 done=provenance.sh lane=agent :: op-provenance enforcement — no Act without ingested intent; binds ARTIFACT mutations only (durability carved out as state capture); path-derived commit classes + CI-level authority; full design in "N8 design notes" below
 
 DISPOSITION N2: TODO
+
+### N8 design notes (Operator inputs, 2026-07-07 — intent detail, not status)
+
+- **Carve-out (Operator strike on the first draft):** "mutate" = *actual artifacts* (plans,
+  criteria, anchor, records, code), not *state artifacts*. State capture for resume is
+  Observe-phase capture, not an Act — exempt as a class, no Sense lineage required.
+- **Enforcement design (Operator-recommended):** consolidate state files in a **single
+  kind-home** (`state/`, registered at N8 execution — not before; no empty form). A commit's
+  class is then **derived from its paths, never self-declared**: touches only `state/` →
+  state-capture (exempt); touches anything else → artifact mutation → must resolve to a
+  `Node:<id>` in this plan (`intake=#issue` upstream refs per *inbox, never truth*).
+- **Authority at GitHub CI (Operator-recommended):** the PR gate is the authoritative enforcer —
+  remote ground, immune to local `--no-verify`; the pre-commit floor remains the friendly early
+  steering vector. Operator merges exempt.
+- **WIP checkpoints** of in-flight node work touch artifact paths and simply carry their node's
+  trailer — op-durability and op-provenance partition commit-space cleanly instead of colliding.
+- The **op-provenance anchor entry lands WITH the mechanism**, never before it (no
+  asserted-but-unwired invariant).
 
 ## Recommended pick order (proposal — the frontier is the fact, this is the preference)
 
