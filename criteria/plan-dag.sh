@@ -75,5 +75,6 @@ dispositions_present() {
   return 0
 }
 assert "every disposition-node has its DISPOSITION line"          dispositions_present
+assert "records the issues-as-nodes decision (inbox, never truth)" grep -qF 'Inbox, never truth' "$PLAN"
 
 assert_done
