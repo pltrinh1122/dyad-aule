@@ -129,6 +129,23 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   documents to runtime state. Source: the Operator's durability/SoT probe, recorded in
   `plan/close-the-gaps.md` §"Why the nodes are not GitHub issues".
 
+- **op-intent** *(learning-invariant; Operator-proposed 2026-07-07; wording = the falsification
+  survivor, `dialectic/2026-07-07-learning-invariant-intent-first.md`)* —
+  **no action on novel normative ground without surfaced interpretation.**
+  Operator framing: these are the **Sense turns** of SPAOR
+  (Sense·Plan·Act·Observe·Reflect, `commons/AGENT.md`) — the Interpretation block is the
+  Sense-phase output, surfaced at the dyad boundary *before* Plan/Act; ratified intent is Sense
+  whose output the Operator already merged. Intent has two states: **ratified** (a merged plan
+  node, a granted disposition, settled invariants) → act autonomously (`op-queue` stands);
+  **novel** (the act would set policy — scope a regime, choose a source of truth, fix or assume
+  an invariant, freeze a plan) → the Agent first surfaces an **Interpretation block** (inferred
+  spine · governing invariants · gap-filling assumptions, each strikeable), riding *with* the
+  draft for merge-gated work and *before* the act for effects beyond the merge-gate.
+  **Ratchet:** each Operator-found buried assumption hardens that artifact class one notch
+  (with-draft → pre-action); only the Operator releases a notch —
+  the Agent never loosens its own gate. Telos accounting: a declared assumption costs a glance;
+  a buried one costs a falsification turn.
+
 - **precondition (honest flag):** the *cloud* half of both needs a configured remote.
   The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
   authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
