@@ -32,6 +32,11 @@ assert "O5: check runner committed executable (git 100755)" \
   bash -c '[ "$(git ls-files -s check | cut -d" " -f1)" = "100755" ]'
 assert "O5: CI workflow present"               bash -c "ls .github/workflows/*.yml >/dev/null 2>&1"
 assert "O5: CI runs the check"                 bash -c "grep -rqF './check' .github/workflows/"
+# Same lesson, whole bucket: every criteria/*.sh (and the .githooks floor, and every bin/ script)
+# must be COMMITTED 100755 — this filesystem's mode bits mask the drift locally (found 2026-07-07:
+# three criteria files had slid to 100644 while ./check's `bash "$f"` hid it).
+nonexec="$(git ls-files -s 'criteria/*.sh' '.githooks/*' 'bin/*' | grep -v '^100755 ' | awk '{print $4}' | paste -sd' ' -)"
+if [ -z "$nonexec" ]; then echo "  ok   O5: criteria/.githooks/bin all committed executable"; else echo "  MISS O5: committed non-executable: $nonexec — git update-index --chmod=+x <file>"; _fails=$((_fails+1)); fi
 
 # O7 — public repo declares a license.
 assert "O7: LICENSE present"                    test -f LICENSE
