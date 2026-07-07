@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# bin/d-start — dyad-aule Start Session Discipline (the mechanism behind the `d-start` token).
+#
+# WHY: a fresh agent otherwise HAND-runs (or forgets) the checks that prove the dyad-rt runtime is
+#   actually live and memory is durable. Mechanizing them removes a per-session trigger AND hand-
+#   error, and closes the self-certification gap this dyad hit head-on: after `bin/claude` turns the
+#   native gate off, `d-start` CERTIFIES that the guard its safety envelope names is really wired.
+#   Pattern referenced from dyad-bond@bin/standup.sh (its Start Session Discipline); aule's own.
+#
+# WHAT IT CERTIFIES — *real* only. It grounds mechanical state (is the floor wired? does ./check
+#   pass? is memory durable?) and SURFACES every seam. It NEVER certifies *right* — that is the
+#   Operator's judgment, sealed by the merge (craft_invariants corollary: the agent never self-
+#   certifies right). ONE sanctioned exception to surface-only (Operator disposition, 2026-07-07):
+#   it AUTO-REPAIRS the core.hooksPath wiring — a safe, idempotent, local act bin/claude already
+#   performs — and REPORTS that it did, so it is a VISIBLE act, never a silent one.
+#
+# Usage:  bin/d-start                       # startup self-diagnostic (triggered by the `d-start` token)
+#         DYAD_DSTART_SKIP_CHECK=1 bin/d-start   # skip the ./check section (used by criteria/d-start.sh
+#                                                #   to exercise d-start without re-entering ./check)
+set -uo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+warn=0
+lines=()
+add()  { lines+=("$1"); }
+flag() { warn=1; }
+
+# ── 1. Runtime (dyad-rt) wiring — the self-certification the launcher's safety envelope depends on ──
+hp="$(git config --get core.hooksPath 2>/dev/null || true)"
+if [ "$hp" != ".githooks" ] && [ -d .githooks ]; then
+  if git config core.hooksPath .githooks 2>/dev/null; then
+    add "Runtime : ✓ core.hooksPath REPAIRED → .githooks (was '${hp:-unset}') — floor now live for this clone."
+  else
+    add "Runtime : ⚠ core.hooksPath is '${hp:-unset}' and auto-set FAILED — run: git config core.hooksPath .githooks"; flag
+  fi
+else
+  add "Runtime : ✓ core.hooksPath=.githooks — the .githooks floor fires (even on raw git)."
+fi
+rt_missing=()
+for s in bin/dyad-rt .githooks/pre-commit .githooks/pre-push bin/git bin/gh; do
+  [ -x "$s" ] || rt_missing+=("$s")
+done
+if ((${#rt_missing[@]})); then
+  add "        ⚠ not executable/present: ${rt_missing[*]} — the guard cannot fully fire."; flag
+fi
+
+# ── 2. Real-half — ground every criteria/ file (the operator paid once; grounding is free after) ──
+if [ "${DYAD_DSTART_SKIP_CHECK:-0}" = "1" ]; then
+  add "Real    : – ./check skipped (DYAD_DSTART_SKIP_CHECK=1)."
+elif out="$(./check 2>&1)"; then
+  n="$(printf '%s\n' "$out" | grep -c '^PASS ')"
+  add "Real    : ✓ ./check green ($n criteria files, 0 fail)."
+else
+  fails="$(printf '%s\n' "$out" | grep '^FAIL ' | awk '{print $2}' | paste -sd, - )"
+  add "Real    : ⚠ ./check FAILED — do not trust the turn. Failing: ${fails:-?}. Run ./check for detail."; flag
+fi
+
+# ── 3. Durability seam (op-durability) — dirty/unbacked = ungrounded memory ──
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+dirty="$(git status --porcelain 2>/dev/null || true)"
+unbacked="$(git rev-list --count HEAD --not --remotes 2>/dev/null || echo '?')"
+if [ -n "$dirty" ]; then
+  add "Durable : ⚠ working tree DIRTY on '$branch' ($(printf '%s\n' "$dirty" | wc -l | tr -d ' ') paths) — commit before relying on the tree as memory."; flag
+elif [ "$unbacked" != "0" ]; then
+  add "Durable : ⚠ $unbacked commit(s) on '$branch' not backed up on any remote — push so the remote holds the memory."; flag
+else
+  add "Durable : ✓ clean + backed up on '$branch'."
+fi
+if [ "$branch" = "main" ]; then
+  add "        · on main — read-only here; branch before mutating (op-durability): git switch -c <branch>."
+fi
+
+# ── 4. Anchor sync (best-effort, no network fetch) — is local main behind the last-seen origin? ──
+if git rev-parse --verify -q origin/main >/dev/null 2>&1; then
+  behind="$(git rev-list --count main..origin/main 2>/dev/null || echo 0)"
+  if [ "$behind" != "0" ]; then
+    add "Sync    : ⚠ local main is $behind behind last-seen origin/main — git pull --ff-only (run git fetch first to refresh)."; flag
+  else
+    add "Sync    : ✓ local main level with last-seen origin/main (git fetch to refresh)."
+  fi
+fi
+
+# ── Output ──
+printf '%s\n\n' "dyad-aule d-start — Start Session Discipline (real-half self-cert). Read DYAD.md; d-start grounds *real*, the merge is *right* (the Operator's)."
+printf '%s\n' "${lines[@]}"
+echo
+if ((warn)); then
+  echo "d-start: ⚠ seams surfaced above — disposition is yours (surfaced, not auto-judged)."
+  exit 1
+fi
+echo "d-start: ✓ runtime live · real-half grounded · memory durable. Clear to work."

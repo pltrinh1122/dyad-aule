@@ -20,7 +20,7 @@ Each artifact-kind has exactly **one home**. A fact lives in one place; cross-re
 | `README.md` | front door | outsider orientation + the **organizational invariants** (below) |
 | `check` | runner | the real-half check — runs every `criteria/` file |
 | `criteria/` | checks | executable acceptance criteria (one file per task) |
-| `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), and the boundary enforcer (`dyad-rt`) |
+| `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), the boundary enforcer (`dyad-rt`), and the Start Session Discipline (`d-start`) |
 | `.githooks/` | runtime floor | git-hook hard floor (`pre-commit`, `pre-push`) — refuses main-mutations even on raw `git` |
 | `retro/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) |
 | `dialectic/` | reports | falsifiable reports & cross-dyad analysis (the published home for claims) |

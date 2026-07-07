@@ -146,6 +146,15 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
   every DYAD-mode session. Landed because real friction set it — a copied `bin/claude` turned the
   native gate off while naming a `.githooks` guard that did not exist here; dyad-rt makes that
   claim real.
+- **session-discipline (`d-start`)** — the Operator opens a session with the **`d-start`** token;
+  the agent's first act is to run **`bin/d-start`** and surface its report before other work. It is
+  the *real*-half self-certification of the runtime: it grounds mechanical state — the `dyad-rt`
+  floor is wired (`core.hooksPath`), `./check` is green, memory is durable, main is in sync — and
+  **surfaces** every seam without judging (`auto-trigger ≠ auto-judgment`; the *right* half stays the
+  Operator's). Its one sanctioned action is auto-repairing the `core.hooksPath` wiring, reported
+  visibly. Referenced from dyad-bond's Start Session Discipline (`bin/standup.sh`); aule's own. It
+  closes the self-cert gap this dyad hit: after the launcher turns the native gate off, `d-start`
+  proves the replacement guard is really live.
 - **deferred (unpracticed):** a **concurrency ceiling** (parallel agents/worktrees) — no real
   friction has set it yet, so landing it now would be form ahead of the spine. Honest defer.
 
@@ -174,5 +183,7 @@ Dyad-specific terms in active use, added to the form's G0 seed vocabulary:
 - **dyad-rt** (Dyad Runtime) — the physical guard layer that makes `op-durability`/`op-PR` real
   rather than prose: `bin/` wrappers + `.githooks` floor + the `bin/dyad-rt` enforcer (single home
   of the boundary policy). See `op-runtime`.
+- **d-start** — the Start Session Discipline: the token that runs `bin/d-start`, the real-half
+  self-certification that the `dyad-rt` runtime is live and memory is durable. See `session-discipline`.
 
 Canonicalized as they stabilize; this stub grows, it does not ossify.
