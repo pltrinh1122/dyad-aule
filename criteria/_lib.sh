@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # _lib.sh — tiny assertion helpers for criteria files. Source me; don't run me.
 #
 #   source "$(dirname "$0")/_lib.sh"

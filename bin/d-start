@@ -23,7 +23,7 @@
 #                                                   #   (used by criteria/d-start.sh so it can't recurse/mutate)
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 DIAG="${DYAD_DSTART_DIAGNOSE_ONLY:-0}"
 
 warn=0

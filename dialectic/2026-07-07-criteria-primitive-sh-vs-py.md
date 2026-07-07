@@ -3,6 +3,10 @@
 > **Status:** accepted 2026-07-07 — a *retroactive codification*: the choice was made implicitly at
 > `criteria/`'s inception and has 8 files of lived practice behind it, which is both its evidence
 > and its chief confound (§confounds: incumbency).
+> **Amended same day (§7):** C3-as-scoped **FALSIFIED by Operator attestation** — portability
+> (macOS, Windows dyad operators) is in-regime. The decision was re-derived under the widened
+> regime and **held**, on a rewritten ground with new enforcement (3-OS CI matrix + shellcheck
+> gate). The record survives *changed*, which is what surviving falsification means.
 > `submitter_dyad_id: dyad-aule · submitter_human: pltrinh1122`
 > **Built for falsification** — every claim carries a `falsification_target`; verdicts against this
 > record are welcome; the Operator's merge (or refusal) of the PR carrying it is the *right*-half
@@ -98,6 +102,10 @@ however ubiquitous — is a genuinely new axis here.*
   fail for **bash-version reasons** (macOS `bash 3.2` vs arrays/`mapfile`, BSD vs GNU coreutils).
   python3's ubiquity is at least bash's; the first version-skew failure kills the "zero marginal
   dependency" advantage in practice.
+- **status: FALSIFIED-as-scoped (2026-07-07, Operator attestation — see §7).** Not by a casualty
+  but by the Operator widening the regime: portability is a *requirement*, not a hypothetical.
+  Superseded by **C3′** in §7; the enforcement moved from "wait for the casualty" to "prove the
+  claim per-push."
 
 **self_named_confounds (apply to all claims):**
 - **incumbency / post-hoc:** 8 files already exist in `*.sh`; this record rationalizes a decision
@@ -131,7 +139,11 @@ workaround:
    means the corpus' claim-shape has moved — revisit the primitive.
 3. **A criteria file exceeding ~120 LOC** or out-nesting `reconcile.sh`'s fixtures → the legibility
    verdict in §3 no longer holds for that file.
-4. **bash-version portability failure** (C3 target) → the dependency advantage was illusory.
+4. ~~**bash-version portability failure** (C3 target) → the dependency advantage was illusory.~~
+   **Fired 2026-07-07** — not by casualty but by Operator attestation (§7). Rewritten: portability
+   is now *proven continuously* (3-OS CI matrix + shellcheck gate); the new tripwire is **a matrix
+   leg that cannot be made green without weakening a criterion** — that would mean the portable
+   subset can't carry the claim-shape, and the primitive must be revisited.
 
 ## 6. Consequences (accepted, eyes open)
 
@@ -145,3 +157,44 @@ workaround:
   decision, carries its falsification targets and confounds, and the tree matches the decision
   (no `*.py` criteria tracked). The *right*-half — whether this survives your falsification — is
   the Operator's, sealed by the merge.
+
+## 7. Falsification event — Operator attestation, 2026-07-07 (C3 → C3′)
+
+**The event.** The Operator attested: *portability is a real necessity — there are other dyad
+operators on different platforms, e.g. macOS and Windows.* This falsifies C3 **as scoped**: C3
+argued from "THIS repo, this machine," and priced portability as a hypothetical to be paid on first
+casualty (tripwire 4). The regime is wider than the claim's scope; a Ratifier attestation of the
+regime beats the record's assumption about it. Registered, not argued with.
+
+**The re-derivation under the widened regime** (the dialectic of §3, re-run):
+
+- **Windows inverts the naive python case.** Stock Windows guarantees *neither* primitive — the
+  built-in `python` is a Microsoft-Store stub, not an interpreter. But a dyad *by construction*
+  runs CLI git (the `.githooks` floor and `bin/` wrappers presuppose it), and **Git for Windows
+  ships bash**. So for the population the Operator named — *dyad* operators — the shell arrives
+  with the tool the practice already cannot exist without; python3 is the extra install.
+- **macOS bounds the subset.** `/bin/bash` is frozen at 3.2 (licensing) and coreutils are BSD: the
+  corpus must stay inside bash-3.2 + POSIX-utility idioms — a *discipline*, which prose cannot hold
+  (the exact drift-failure this repo's O-invariants exist to prevent).
+- **The runtime layer was always implicated.** Criteria are the smallest part: `bin/_dyad-rt`,
+  `_reconcile`, `d-start`, the wrappers and hooks are all shell. Migrating criteria to python would
+  leave the guard layer's portability question untouched — the attestation is really about the
+  whole shell corpus, and the enforcement below covers all of it.
+
+**C3′ (supersedes C3).** *bash rides git's own distribution on all three platforms, so for
+git-based dyads the marginal dependency is still zero — and this is proven per-push, not asserted:
+the real-half check runs on a ubuntu/macos/windows CI matrix, and the whole shell corpus passes a
+`shellcheck` portable-subset gate.*
+- evidence: `.github/workflows/check.yml` (3-OS matrix, `shell: bash` on the windows leg; the
+  `shellcheck` job over `check`, `criteria/*.sh`, `bin/*`, `.githooks/*`); the corpus made
+  shellcheck-clean at warning severity in the same commit (6 findings fixed: 5× `cd || exit`,
+  1 shell directive).
+- falsification_target: **a matrix leg that cannot be made green without weakening a criterion** —
+  a check diluted to stay portable is fidelity inverted (C2's logic applied to platforms); OR a
+  real dyad-operator platform where git's distribution does not carry a usable bash. Either ends
+  C3′ and reopens the primitive decision, with python3 the leading successor *for that regime*.
+
+**Confound, self-named:** the matrix proves the *runners'* macOS/Windows (GitHub's images, where
+`env bash` may resolve to a newer brew bash on macOS), not every operator's laptop. It is the best
+continuously-payable proxy; a lived report from an actual macOS/Windows dyad operator outranks it
+and is invited — as a DM or an issue.
