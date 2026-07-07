@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# bin/claude — dyad-aule launcher: start Claude Code in DYAD mode (bypassPermissions).
+#
+# WHY (Operator-directed, 2026-07-06 — the d-land bypass election; launcher pattern inherited from
+#   dyad-cairn@bin/agy): the Operator wants a PER-LAUNCH choice between the native gate and gate-off,
+#   WITHOUT baking bypass into config. Run `claude` = normal (native gate on). Run `bin/claude` =
+#   DYAD mode: the native permission gate is OFF and the Dyad Runtime (dyad-rt) is the authority.
+#   This is the Operator's explicit OPT-IN act — NOT an Agent self-grant: invoked by path, ratified
+#   by the Operator's merge, never auto-applied to a normal `claude`. That distinction is the whole
+#   reason a wrapper is covalent where a checked-in `defaultMode: bypassPermissions` is not.
+#
+# THE AUTHORITY WHEN THE NATIVE GATE IS OFF — dyad-rt (this repo's OWN implementation, not bond's):
+#   1. .githooks/pre-commit + pre-push — the HARD FLOOR. Refuse any commit/push targeting `main`,
+#      firing even on RAW `git` (this launcher wires `core.hooksPath → .githooks` below, so the
+#      floor is live for the whole session). `--no-verify` is the single VISIBLE escape.
+#   2. bin/git · bin/gh — physical wrappers routing mutations through the enforcer (Execution
+#      Sandbox Invariant): the friendly, early steering vector.
+#   3. bin/dyad-rt — the enforcer: the SINGLE HOME of the boundary policy (never mutate main;
+#      `gh pr merge` is the Operator's). Both the floor and the wrappers call it.
+#   4. criteria/dyad-rt.sh via ./check — proves the floor actually fires (aule's fidelity signature:
+#      a guard asserted-but-unwired is counterfeit; this one is grounded real).
+#   NB: an earlier copy of this file (from dyad-bond) named a "`.githooks` git-layer + Covalent
+#   discipline" that did NOT exist in aule — a false claim. dyad-rt makes the claim real.
+#
+# SAFETY ENVELOPE: main-history protection SURVIVES gate-off — the .githooks floor fires regardless
+#   of permission mode (`--no-verify` = the visible escape). EXPOSED: the NON-git destructive class
+#   (`rm -rf <subdir>`, `git reset --hard`, `git clean -fd`) — no hook covers it; safety then rests
+#   on an isolated/disposable run host. `rm -rf /`·`~`, explicit ask-rules, and MCP consent still
+#   prompt even here. Use only where that envelope holds.
+#
+# NAMING: the extensionless `claude` is INTENTIONAL and path-invoked (`bin/claude`), NOT a PATH
+#   shadow — bin/ is deliberately NOT on PATH. The PATH-strip below is DEFENSIVE (keeps this
+#   recursion-safe even if bin/ is ever added to PATH), inherited in spirit from cairn@bin/agy.
+#
+# Usage:  bin/claude [args...]              # launch Claude Code with the native gate OFF
+#         CLAUDE_SH_DRY_RUN=1 bin/claude    # print the resolved launch command, do NOT exec
+
+set -euo pipefail
+
+# Strip our own bin dir from PATH so a bare `claude`/`git` resolves to the REAL binary, never a
+# wrapper in this dir (recursion guard, inherited from dyad-cairn@bin/agy).
+MY_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATH="$(echo "$PATH" | sed -e "s|$MY_BIN:||g" -e "s|:$MY_BIN||g" -e "s|^$MY_BIN\$||g")"
+export PATH
+
+command -v claude >/dev/null 2>&1 \
+  || { echo "bin/claude: real 'claude' not found on PATH after de-shadowing bin/." >&2; exit 127; }
+
+# Wire the dyad-rt hard floor for this session: point git at .githooks so pre-commit/pre-push fire
+# even on raw `git`. Idempotent; local to this clone. This is the launcher GUARANTEEING the guard its
+# own safety envelope names — turning off the native gate and standing up the replacement in one act.
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -n "$REPO_ROOT" && -d "$REPO_ROOT/.githooks" ]]; then
+  git -C "$REPO_ROOT" config core.hooksPath .githooks
+fi
+
+if [[ "${CLAUDE_SH_DRY_RUN:-0}" == "1" ]]; then
+  printf 'bin/claude: (dry-run) would exec → %s --dangerously-skip-permissions %s\n' \
+    "$(command -v claude)" "$*" >&2
+  exit 0
+fi
+
+echo "bin/claude: launching in DYAD mode — bypassPermissions (native gate OFF; authority = dyad-rt: .githooks floor + bin/git·bin/gh wrappers + bin/dyad-rt enforcer)." >&2
+exec claude --dangerously-skip-permissions "$@"

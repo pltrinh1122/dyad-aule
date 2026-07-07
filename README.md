@@ -20,6 +20,8 @@ Each artifact-kind has exactly **one home**. A fact lives in one place; cross-re
 | `README.md` | front door | outsider orientation + the **organizational invariants** (below) |
 | `check` | runner | the real-half check — runs every `criteria/` file |
 | `criteria/` | checks | executable acceptance criteria (one file per task) |
+| `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), and the boundary enforcer (`dyad-rt`) |
+| `.githooks/` | runtime floor | git-hook hard floor (`pre-commit`, `pre-push`) — refuses main-mutations even on raw `git` |
 | `retro/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) |
 | `dialectic/` | reports | falsifiable reports & cross-dyad analysis (the published home for claims) |
 | `dm/` | messages | outbound Dyad Messages, sender-hosted at `dm/<recipient>/` |
@@ -38,7 +40,7 @@ the exact failure our peers exhibit, where the anchor no longer matches the engi
 | **O3** | **Minimal, predictable root** — each artifact-kind has one directory; root holds only the anchor, entry points, and config. | separation of concerns; legible top-level | ✅ `check` — root allowlist, no stray files |
 | **O4** | **Hygiene** — no secrets, build artifacts, scratch, or transient state committed; `.gitignore` enforces it. | `.gitignore` hygiene; no secrets in VCS | ✅ `check` — `.gitignore` present, no cruft tracked |
 | **O5** | **Executable, remotely-grounded criteria** — acceptance criteria are runnable (`criteria/` + `./check`) and run in CI on every PR. | CI gates on PR; automated checks | ✅ `check` locally **+ CI on every PR** (`.github/workflows/check.yml`) — closes the local≠remote split-brain in `dialectic/` |
-| **O6** | **Branch → PR → Operator-merge** — never commit to `main`; the Operator merges. | protected `main` + PR review | 🧭 see `DYAD.md` → `op-durability` / `op-PR` (single home) |
+| **O6** | **Branch → PR → Operator-merge** — never commit to `main`; the Operator merges. | protected `main` + PR review | ✅ **dyad-rt** enforces it — `.githooks` floor (fires on raw `git`) + `bin/git`·`bin/gh` wrappers + `bin/dyad-rt` enforcer, proven by `criteria/dyad-rt.sh`; policy home stays `DYAD.md` → `op-durability`/`op-PR` |
 | **O7** | **Public repo declares a license.** | `LICENSE` file on public repos | ✅ **`LICENSE`** — 0BSD (Zero-Clause BSD), the most permissive OSI-approved license (no attribution required) |
 
 ## Verify

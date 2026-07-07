@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# bin/git — dyad-rt physical wrapper for git (Execution Sandbox Invariant).
+#
+# Routes mutating git commands through bin/dyad-rt (the enforcer, single home for the policy)
+# BEFORE handing off to the real git. This is the *friendly, early* steering vector; the
+# authoritative floor is .githooks/pre-commit + pre-push, which fire even on raw `git` (a
+# wrapper only helps when it's the thing invoked). Policy lives in bin/dyad-rt — not here.
+#
+# Usage:  bin/git <any git args>          # guarded git
+set -euo pipefail
+
+# De-shadow our own bin/ from PATH so a bare `git` never re-enters this wrapper (recursion guard).
+MY_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATH="$(echo "$PATH" | sed -e "s|$MY_BIN:||g" -e "s|:$MY_BIN||g" -e "s|^$MY_BIN\$||g")"
+export PATH
+REAL_GIT="$(command -v git)" || { echo "bin/git: real 'git' not found after de-shadowing bin/." >&2; exit 127; }
+
+case "${1:-}" in
+  commit)
+    branch="$("$REAL_GIT" symbolic-ref --quiet --short HEAD 2>/dev/null || echo "")"
+    [ -n "$branch" ] && "$MY_BIN/dyad-rt" check-branch "$branch"
+    ;;
+  push)
+    # Best-effort early guard: deny the common case of pushing while on the protected branch.
+    # Arbitrary refspecs (e.g. `git push origin HEAD:main` from a feature branch) are backstopped
+    # by .githooks/pre-push, which inspects the actual destination refs.
+    branch="$("$REAL_GIT" symbolic-ref --quiet --short HEAD 2>/dev/null || echo "")"
+    [ -n "$branch" ] && "$MY_BIN/dyad-rt" check-push "$branch"
+    ;;
+esac
+
+exec "$REAL_GIT" "$@"

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# .githooks/pre-push — dyad-rt hard floor: refuse a push/force/delete targeting the protected branch.
+#
+# Fires even on RAW `git push` (bin/claude wires core.hooksPath → .githooks on launch), so it
+# survives permission-gate-off (DYAD mode). This is the authoritative floor for op-PR: main is
+# the Operator's. `git push --no-verify` is the documented, VISIBLE escape. Policy is in
+# bin/dyad-rt (single home); this hook only reads git's push protocol and delegates.
+#
+# git feeds pre-push one line per ref on stdin: "<local ref> <local oid> <remote ref> <remote oid>".
+# The <remote ref> is the push DESTINATION; deletion sends an all-zero <local oid>. We check the
+# destination ref for every line, so push, force-push, AND delete-to-main are all refused.
+set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+
+while read -r _local_ref _local_oid remote_ref _remote_oid; do
+  [ -z "${remote_ref:-}" ] && continue
+  "$root/bin/dyad-rt" check-push "$remote_ref"
+done

@@ -10,7 +10,7 @@ cd "$repo"
 assert "O1: root README.md exists"            test -f README.md
 
 # O3 — minimal, predictable root: every tracked top-level entry is allowlisted.
-ALLOW=" .gitignore .gitmodules CLAUDE.md DYAD.md README.md LICENSE check commons criteria dialectic dm retro .github "
+ALLOW=" .gitignore .gitmodules CLAUDE.md DYAD.md README.md LICENSE check commons criteria dialectic dm retro .github bin .githooks "
 stray=""
 for e in $(git ls-files | sed 's#/.*##' | sort -u); do
   case "$ALLOW" in *" $e "*) : ;; *) stray="$stray $e" ;; esac
