@@ -47,8 +47,8 @@ DISPOSITION N2: TODO
   criteria, anchor, records, code), not *state artifacts*. State capture for resume is
   Observe-phase capture, not an Act — exempt as a class, no Sense lineage required.
 - **Enforcement design (Operator-recommended):** consolidate state files in a **single
-  kind-home** (`state/`, registered at N8 execution — not before; no empty form). A commit's
-  class is then **derived from its paths, never self-declared**: touches only `state/` →
+  kind-home** (`.dyad-state/`, Operator-named 2026-07-07; registered at N8 execution — not before; no empty form). A commit's
+  class is then **derived from its paths, never self-declared**: touches only `.dyad-state/` →
   state-capture (exempt); touches anything else → artifact mutation → must resolve to a
   `Node:<id>` in this plan (`intake=#issue` upstream refs per *inbox, never truth*).
 - **Authority at GitHub CI (Operator-recommended):** the PR gate is the authoritative enforcer —
