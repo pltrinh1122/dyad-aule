@@ -89,6 +89,17 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   canonical judgment — the "right" call on what becomes the dyad's truth — never the
   agent's.
 
+- **op-runtime (dyad-rt)** — the *physical* enforcement of the two above, so they are guards,
+  not just prose. Adapted from dyad-cairn's Execution-Sandbox / Builder-vs-Enforcer invariants,
+  made aule's own: `bin/claude` launches with the native gate OFF and wires the replacement in the
+  same act. The authority is `bin/dyad-rt` (the enforcer — single home of the boundary policy),
+  reached two ways: a `.githooks` **hard floor** (`pre-commit`/`pre-push`, fires even on raw `git`;
+  `--no-verify` is the visible escape) and the `bin/git`·`bin/gh` **wrappers** (the early steering
+  vector). aule's boundary, not cairn's: refuse any mutation targeting `main` and refuse `gh pr
+  merge` — merge-to-main stays the Operator's. Proven *real* by `criteria/dyad-rt.sh` (it must
+  DENY main-mutations **and** ALLOW a working-branch push) — the fidelity move a peer's asserted-
+  but-unwired guard skips.
+
 - **precondition (honest flag):** the *cloud* half of both needs a configured remote.
   The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
   authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
@@ -129,9 +140,14 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
   **high-autonomy-within-a-granted-task**: once the Operator grants disposition on a scoped
   task, complete it without per-step check-ins, front-loading the decisions that need
   judgment. Lived this session.
-- **deferred (unpracticed):** a **concurrency ceiling** (parallel agents/worktrees) and
-  **tooling-abstraction** (how the dyad abstracts over tools) — no real friction has set
-  these yet, so landing them now would be form ahead of the spine. Honest defers.
+- **tooling-abstraction** — **landed as dyad-rt** (`bin/` wrappers + `.githooks` floor + the
+  `bin/dyad-rt` enforcer; see `op-runtime`). How the dyad abstracts over its tools: raw `git`/`gh`
+  route through physical wrappers to a single-home enforcer, and the launcher wires the guard on
+  every DYAD-mode session. Landed because real friction set it — a copied `bin/claude` turned the
+  native gate off while naming a `.githooks` guard that did not exist here; dyad-rt makes that
+  claim real.
+- **deferred (unpracticed):** a **concurrency ceiling** (parallel agents/worktrees) — no real
+  friction has set it yet, so landing it now would be form ahead of the spine. Honest defer.
 
 ### Ontology (#7)
 
@@ -155,5 +171,8 @@ Dyad-specific terms in active use, added to the form's G0 seed vocabulary:
   (proposing form ahead of the spine is the ledger's chief turn-sink).
 - **real-half check** — the computational enforcement of `craft_invariants`: acceptance
   criteria made executable (`criteria/` + `./check`).
+- **dyad-rt** (Dyad Runtime) — the physical guard layer that makes `op-durability`/`op-PR` real
+  rather than prose: `bin/` wrappers + `.githooks` floor + the `bin/dyad-rt` enforcer (single home
+  of the boundary policy). See `op-runtime`.
 
 Canonicalized as they stabilize; this stub grows, it does not ossify.

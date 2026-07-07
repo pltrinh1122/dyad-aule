@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# bin/dyad-rt — the Dyad Runtime enforcer (dyad-aule).
+#
+# WHAT: the single home for dyad-aule's runtime boundary policy. Every guard decision —
+#   "may this git/gh mutation proceed?" — is answered here and NOWHERE else. The .githooks
+#   floor and the bin/git · bin/gh wrappers are thin call sites; this file holds the rule
+#   (O2 single-home / DRY). Change the boundary once, here.
+#
+# WHY (architecture — dyad-rt, adapted from dyad-cairn@DYAD.md §5, made aule's own):
+#   - Execution Sandbox Invariant: the agent never calls raw git/gh; mutations route through
+#     physical ./bin/ wrappers → through this enforcer. (cairn's shape.)
+#   - Builder vs Enforcer Invariant: enforcement lives in a dedicated Enforcer script, never
+#     baked into the tool that does the work. This IS that script. (cairn's shape.)
+#   - aule's OWN boundary (not cairn's external-repo ABAC): op-durability / op-PR —
+#     NEVER commit or push to `main`; main is the Operator's, and merge-to-main is the
+#     Operator's canonical *right* judgment, never the agent's (DYAD.md). So: refuse any
+#     mutation targeting main, and refuse `gh pr merge`.
+#
+# FIDELITY (aule's craft): a guard that is asserted but not wired is counterfeit — the exact
+#   failure aule's own dialectic/ pins on peers. So this enforcer is proven *real* by
+#   criteria/dyad-rt.sh, which drives it and asserts it both DENIES the forbidden mutations
+#   AND ALLOWS a working-branch push (a guard that denies everything proves nothing).
+#
+# Subcommands (all exit 0 = allowed, nonzero = refused; refusals print a steering vector to stderr):
+#   dyad-rt check-branch <branch>       # deny if <branch> is protected (commit target)
+#   dyad-rt check-push  <remote-ref>    # deny if <remote-ref> targets protected (push/force/delete)
+#   dyad-rt check-gh    <gh-args...>    # deny `gh pr merge` (merge-to-main is the Operator's)
+#   dyad-rt protected                   # print the protected branch name (single source)
+set -euo pipefail
+
+# The one protected branch. main is the Operator's (op-durability / op-PR).
+PROTECTED_BRANCH="${DYAD_RT_PROTECTED_BRANCH:-main}"
+
+deny() {
+  # deny "<what>" "<why>" "<escape/steering>"
+  {
+    echo "🚫 dyad-rt: $1"
+    echo "   why: $2"
+    echo "   → $3"
+  } >&2
+  exit 1
+}
+
+# Normalize a ref to its branch name. Handles "refs/heads/main" and "src:dst" refspecs, but
+# preserves slashes IN the branch name (so "release/main" stays "release/main", NOT "main" —
+# stripping to the last slash would false-positive on any branch ending in "/main").
+_branch_of_ref() {
+  local r="${1##*:}"      # "src:dst" refspec → the destination side
+  echo "${r#refs/heads/}" # drop the refs/heads/ prefix if present
+}
+
+cmd="${1:-}"
+[ "$#" -gt 0 ] && shift || true
+
+case "$cmd" in
+  protected)
+    echo "$PROTECTED_BRANCH"
+    ;;
+
+  check-branch)
+    branch="$(_branch_of_ref "${1:-}")"
+    if [ "$branch" = "$PROTECTED_BRANCH" ]; then
+      deny "commit on '$PROTECTED_BRANCH' refused" \
+           "op-durability — never commit to main; work on a branch (DYAD.md)" \
+           "switch to a working branch: git switch -c <branch>   (escape: git commit --no-verify)"
+    fi
+    ;;
+
+  check-push)
+    ref="$(_branch_of_ref "${1:-}")"
+    if [ "$ref" = "$PROTECTED_BRANCH" ]; then
+      deny "push to '$PROTECTED_BRANCH' refused" \
+           "op-PR — main is the Operator's; open a PR and let the Operator merge (DYAD.md)" \
+           "push your working branch instead: git push -u origin <branch>   (escape: git push --no-verify)"
+    fi
+    ;;
+
+  check-gh)
+    # Refuse merge-to-main; allow the rest (pr create/view/status, issue, auth, ...).
+    if [ "${1:-}" = "pr" ] && [ "${2:-}" = "merge" ]; then
+      deny "gh pr merge refused" \
+           "op-PR — merge-to-main is the Operator's canonical *right* judgment, never the agent's (DYAD.md)" \
+           "leave the PR for the Operator to merge; the agent proposes, the Operator disposes"
+    fi
+    ;;
+
+  ""|-h|--help)
+    sed -n '2,20p' "$0" >&2
+    exit 0
+    ;;
+
+  *)
+    echo "dyad-rt: unknown subcommand '$cmd' (see: dyad-rt --help)" >&2
+    exit 2
+    ;;
+esac

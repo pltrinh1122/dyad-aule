@@ -16,9 +16,10 @@ assert "#4 names Builder/Architect"      grep -qF "Builder/Architect"  "$dyad"
 assert "#4 names Ratifier/Merge-gate"    grep -qF "Ratifier/Merge-gate" "$dyad"
 assert "#4 names Commons steward"        grep -qF "Commons steward"    "$dyad"
 
-# #5's two unpracticed knobs stay honest defers (not silently set).
-assert "#5 keeps concurrency ceiling deferred"  grep -qF "concurrency ceiling" "$dyad"
-assert "#5 keeps tooling-abstraction deferred"  grep -qF "tooling-abstraction" "$dyad"
+# #5: concurrency-ceiling stays an honest defer; tooling-abstraction is now LANDED as dyad-rt
+# (real friction set it — see op-runtime). The assert tracks reality, not a stale label.
+assert "#5 keeps concurrency ceiling deferred"  grep -qE "concurrency ceiling.*Honest defer|deferred.*concurrency ceiling" "$dyad"
+assert "#5 lands tooling-abstraction as dyad-rt" grep -qE "tooling-abstraction.*landed as dyad-rt" "$dyad"
 
 # #8 canonicalizes the load-bearing terms.
 assert "#8 defines real vs right"        grep -qF "the two grounds of fidelity" "$dyad"
