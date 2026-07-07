@@ -136,15 +136,10 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
 ### Ontology (#7)
 
 Artifact-kinds the craft produces, each with a **single home** (inherited from the Commons'
-one-file-per-writer grain — a fact lives in exactly one; cross-references point, never copy):
-
-- **`criteria/`** — executable acceptance criteria (the real-half check); one file per task.
-- **`retro/`** — the convergence ledger (turns-per-slot, accelerators, turn-sinks).
-- **`DYAD.md`** — the loadable anchor; the one home for *who we are*.
-- **`commons/directory/dyad-aule.yaml`** — the dyad's registry entry in the form (edited
-  only by us).
-
-New kinds are added here as they accrue.
+one-file-per-writer grain — a fact lives in exactly one; cross-references point, never copy).
+The **live layout map + the organizational invariants live in `README.md`** — the
+authoritative, `./check`-enforced home for how this repo is structured (front door for an
+outsider, per invariant O1). New kinds are registered there as they accrue.
 
 ### Vocabulary (#8)
 
