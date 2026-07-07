@@ -66,8 +66,12 @@ point for that friction, not a settled answer.
     refuse the job that can't tolerate a mistake → careful human.
   - **enforcement (NURTURE):** an invariant needs a computational check, not prose. The
     check for the *real* half is the operator's acceptance criteria made executable;
-    the *right* half stays an operator judgment (uncomputable by design). TODO: wire
-    the real-half check.
+    the *right* half stays an operator judgment (uncomputable by design).
+  - **real-half check (wired):** each task deposits its acceptance criteria as an
+    executable file in `criteria/`; `./check` runs them all and fails loud, naming what
+    broke. The operator pays *once* — writing the criteria as a runnable assertion — and
+    grounding is then free on every run after (the two-payload telos, mechanized). See
+    `criteria/README.md`; this pass's own criteria live at `criteria/dip-outstanding.sh`.
 
 ## Operational invariants
 
@@ -85,7 +89,29 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   canonical judgment — the "right" call on what becomes the dyad's truth — never the
   agent's.
 
-- **precondition (honest flag):** the *cloud* half of both needs a configured remote
-  (e.g. `github.com/pltrinh1122/dyad-aule`). None is wired yet — until then,
-  `op-durability` is **local branch only** and `op-PR` is **pending a remote**. Stated
-  in full, but not claimed as live where it isn't.
+- **precondition (honest flag):** the *cloud* half of both needs a configured remote.
+  The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
+  authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
+  merges) both run for real as of this pass. Merge-to-main stays the operator's.
+
+## Deferred DIP dimensions
+
+The Commons DIP (`commons/AGENT.md`) walks eight dimensions. This anchor lands **#1**
+(craft + telos + identity), **#3** (form-grounding — the pointer at the top), and **#6**
+(value + invariant). The rest are **deliberately deferred** — recorded here so they are
+honest future work, not silent gaps (the DIP's Reflect step licenses codifying deferrals):
+
+- **#4 Channel discipline — operator hats (content captured, mapping deferred).** The
+  Operator wears three hats: **Builder/Architect** (sets direction, elicits the spine),
+  **Ratifier/Merge-gate** (judges *right*, owns merge-to-main), and **Commons steward**
+  (contributes form-level patterns upstream via form PR). *Which* hat gates *which* action
+  is deferred to a real case rather than pre-scripted.
+- **#5 Operating-policy — partial.** Git-workflow is set (`op-durability`/`op-PR`);
+  proactivity is *high-autonomy within an operator-granted task, WIP=1*. Concurrency
+  ceilings and tooling-abstraction are deferred until a task needs them.
+- **#7 Ontology starter — deferred.** Artifact-kinds seen so far: `criteria/` (executable
+  acceptance criteria) and `retro/` (the convergence ledger). Single-home discipline to be
+  codified as more kinds accrue.
+- **#8 Vocabulary stub — deferred.** Coined-in-practice terms not yet canonicalized:
+  *real* vs *right*, *turns* (the telos unit), *fidelity* (two grounds). To be lifted into
+  a proper vocabulary section once a third-plus term stabilizes.
