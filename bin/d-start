@@ -82,6 +82,16 @@ fi
 if [ "$branch" = "main" ]; then
   add "         · on main — read-only here; branch before mutating (op-durability): git switch -c <branch>."
 fi
+# op-provenance (plan node N8): unpushed commits must trace to a plan node — surfaced, not judged.
+if [ "$unbacked" != "0" ] && [ "$unbacked" != "?" ] && [ -x bin/_dyad-rt ]; then
+  untraced=0
+  for c in $(git rev-list HEAD --not --remotes 2>/dev/null); do
+    ./bin/_dyad-rt check-provenance "$c" >/dev/null 2>&1 || untraced=$((untraced+1))
+  done
+  if [ "$untraced" != 0 ]; then
+    add "         ⚠ $untraced unpushed commit(s) lack Node: provenance (op-provenance) — amend before PR; the CI gate will refuse them."; flag
+  fi
+fi
 
 # ── 5. Anchor sync (best-effort) — is local main behind origin? (reconcile already fetched if live) ──
 if git rev-parse --verify -q origin/main >/dev/null 2>&1; then

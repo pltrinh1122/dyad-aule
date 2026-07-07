@@ -146,6 +146,17 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   the Agent never loosens its own gate. Telos accounting: a declared assumption costs a glance;
   a buried one costs a falsification turn.
 
+- **op-provenance** *(Operator-directed 2026-07-07; mechanism = plan node N8 — this entry landed
+  WITH the mechanism, per the no-asserted-but-unwired rule)* —
+  **no Act without ingested intent.**
+  Every artifact-mutating commit carries a `Node: <id>` trailer resolving to `plan/`. Commit
+  class is **derived from paths, never declared**: a commit touching only `.dyad-state/` is
+  state capture (SPAOR Observe — the op-durability carve-out), exempt; merge commits are the
+  Operator's ratification act, exempt; pre-N8 history is never re-judged. Enforcement:
+  **authoritative at the CI PR gate** (remote ground — a local `--no-verify` cannot pass it),
+  early-steered by the `.githooks/commit-msg` floor, policy single-homed in
+  `bin/_dyad-rt check-provenance`; `d-start` surfaces untraced unpushed commits as a seam.
+
 - **precondition (honest flag):** the *cloud* half of both needs a configured remote.
   The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
   authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
