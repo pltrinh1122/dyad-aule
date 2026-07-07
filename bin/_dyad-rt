@@ -26,6 +26,12 @@
 #   dyad-rt check-push  <remote-ref>    # deny if <remote-ref> targets protected (push/force/delete)
 #   dyad-rt check-gh    <gh-args...>    # deny `gh pr merge` (merge-to-main is the Operator's)
 #   dyad-rt protected                   # print the protected branch name (single source)
+#   dyad-rt check-provenance <commit>   # op-provenance (plan node N8): deny an artifact-mutating
+#                                       #   commit lacking a 'Node: <id>' trailer that resolves to
+#                                       #   plan/. Class is DERIVED from paths, never declared:
+#                                       #   only-.dyad-state/ = state capture (exempt); empty and
+#                                       #   merge commits exempt. CI is the authoritative gate.
+#   dyad-rt check-provenance-staged <msgfile>  # same rule at the commit-msg floor (early steering)
 set -euo pipefail
 
 # The one protected branch. main is the Operator's (op-durability / op-PR).
@@ -48,6 +54,29 @@ _branch_of_ref() {
   local r="${1##*:}"      # "src:dst" refspec → the destination side
   echo "${r#refs/heads/}" # drop the refs/heads/ prefix if present
 }
+
+# Does node <id> exist in plan/*.md — at ref $2 when given, else in the working tree (the
+# commit-msg floor resolves against the tree being committed; replanning commits that ADD the
+# node they reference therefore resolve).
+_plan_has_node() {
+  local id="$1" ref="${2:-}" f
+  {
+    if [ -n "$ref" ]; then
+      for f in $(git ls-tree -r --name-only "$ref" -- plan/ 2>/dev/null | grep '\.md$'); do
+        git show "$ref:$f" 2>/dev/null
+      done
+    else
+      cat plan/*.md 2>/dev/null
+    fi
+  } | awk -v id="$id" '$1=="NODE" && $2==id{found=1} END{exit !found}'
+}
+
+# Extract the first 'Node: <id>' trailer from stdin; empty if none.
+_node_trailer() { grep -E '^Node: *[A-Za-z0-9_-]+ *$' | head -1 | sed -e 's/^Node: *//' -e 's/ *$//'; }
+
+# True (0) iff the path list on stdin contains at least one path OUTSIDE .dyad-state/ —
+# i.e., the commit is an ARTIFACT mutation, not state capture (op-provenance carve-out).
+_touches_artifacts() { grep -v '^$' | grep -qv '^\.dyad-state/'; }
 
 cmd="${1:-}"
 [ "$#" -gt 0 ] && shift || true
@@ -81,6 +110,46 @@ case "$cmd" in
       deny "gh pr merge refused" \
            "op-PR — merge-to-main is the Operator's canonical *right* judgment, never the agent's (DYAD.md)" \
            "leave the PR for the Operator to merge; the agent proposes, the Operator disposes"
+    fi
+    ;;
+
+  check-provenance)
+    commit="${1:?check-provenance needs a commit}"
+    # Merge commits are the Operator's ratification act (op-PR) — exempt.
+    nparents="$(git rev-list --no-walk --parents "$commit" 2>/dev/null | awk '{print NF-1; exit}')"
+    [ "${nparents:-0}" -gt 1 ] && exit 0
+    paths="$(git show --name-only --format= "$commit" 2>/dev/null)"
+    # Empty commits mutate no artifact; only-.dyad-state/ commits are state capture (Observe).
+    printf '%s\n' "$paths" | _touches_artifacts || exit 0
+    id="$(git log -1 --format=%B "$commit" 2>/dev/null | _node_trailer)"
+    if [ -z "$id" ]; then
+      deny "artifact commit ${commit:0:10} lacks provenance" \
+           "op-provenance — no Act without ingested intent; artifact mutations trace to a plan node (DYAD.md)" \
+           "add trailer 'Node: <id>' referencing plan/   (escape: --no-verify locally; the CI gate still holds)"
+    fi
+    if ! _plan_has_node "$id" "$commit"; then
+      deny "commit ${commit:0:10} names unknown node '$id'" \
+           "op-provenance — the trailer must resolve to a NODE in plan/ at that commit" \
+           "enqueue the node first (replanning PR) or fix the trailer id"
+    fi
+    ;;
+
+  check-provenance-staged)
+    msgfile="${1:?check-provenance-staged needs the commit-msg file}"
+    # A merge in progress is the Operator's lane (and its tree diff is not an agent Act).
+    [ -f "$(git rev-parse --git-dir 2>/dev/null)/MERGE_HEAD" ] && exit 0
+    paths="$(git diff --cached --name-only 2>/dev/null)"
+    printf '%s\n' "$paths" | _touches_artifacts || exit 0
+    id="$(_node_trailer <"$msgfile")"
+    if [ -z "$id" ]; then
+      deny "commit lacks provenance (artifact paths staged)" \
+           "op-provenance — no Act without ingested intent (DYAD.md); state capture belongs under .dyad-state/" \
+           "add trailer 'Node: <id>' referencing plan/   (escape: git commit --no-verify; the CI gate still holds)"
+    fi
+    if ! _plan_has_node "$id"; then
+      deny "trailer names unknown node '$id'" \
+           "op-provenance — the trailer must resolve to a NODE in plan/*.md" \
+           "enqueue the node first (replanning PR) or fix the trailer id"
     fi
     ;;
 

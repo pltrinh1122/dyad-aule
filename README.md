@@ -24,6 +24,7 @@ Each artifact-kind has exactly **one home**. A fact lives in one place; cross-re
 | `.githooks/` | runtime floor | git-hook hard floor (`pre-commit`, `pre-push`) — refuses main-mutations even on raw `git` |
 | `reflect/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) — the home of SPAOR's closing **Reflect** phase (`commons/AGENT.md`). *Term `retro` deprecated 2026-07-07.* |
 | `plan/` | queue | the activity queue — execution plans as DAGs of nodes, decoupling chat-turns from execution (SPAOR **Plan**). Node state is **derived** from ground (criteria-on-main; dispositions), never stored — see `plan/close-the-gaps.md` for the contract |
+| `.dyad-state/` | state | state capture for resume (SPAOR **Observe**) — the op-provenance carve-out: a commit touching **only** this home is state-capture, exempt from `Node:` lineage; everything else is an artifact mutation that must trace to a plan node |
 | `dialectic/` | reports | falsifiable reports & cross-dyad analysis (the published home for claims) |
 | `dm/` | messages | outbound Dyad Messages, sender-hosted at `dm/<recipient>/` |
 | `commons/` | form (submodule) | the shared Dyad-Practice Commons |
