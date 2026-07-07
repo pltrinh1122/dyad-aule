@@ -22,6 +22,50 @@ What is **not** a gap (proven, load-bearing, reusable as-is): the boundary runti
 `_reconcile`), the criteria/check/CI-matrix pipeline, the falsification method itself, and the
 branch→PR→Operator-merge loop — today it ran three concurrent PRs to ratification.
 
+**Amendment (same day, Operator falsification of this report's own frame):** the first draft of
+this evaluation carried an unexamined assumption — *that all activity is driven synchronously
+through operator↔agent chat-turns*. The Operator refuted it: an execution plan's nodes execute in
+sequence but **not temporally adjacent**, so the chat-turn must decouple from execution. That is
+G0 below — more foundational than the three gaps the draft called blocking (closing those three
+is itself a multi-node plan that will span sessions — the counterexample was the report's own
+close-order). This miss is an *instance* of the self-grading confound §1 already named: the gap
+the agent could not see was absent from the list until the Operator supplied it.
+
+## 0.5 G0 — No activity queue: chat-turn and execution are coupled. *Severity: MOST FOUNDATIONAL.*
+
+Today, work exists only inside a live session: a turn requests, the same session executes, the
+turn ends when the work does. There is no persistent **execution plan** — no queue of plan-nodes
+that survives the session, whose nodes are executed *in dependency order but on no particular
+clock*, by whichever future session picks them up. Consequences while this holds:
+
+- any plan longer than one session exists only as prose in a chat scroll or a PR body — not as
+  ground the practice can derive "what's next" from;
+- the Operator can only steer synchronously — intent that arrives mid-execution has nowhere
+  durable to land;
+- SPAOR's **Plan → Act** joint is unmechanized: Plan output evaporates unless Act is immediate.
+
+**The design is already ratified; only the mechanism is absent.** The concurrency evaluation
+(`dialectic/2026-07-06-concurrency-fsm-evaluation.md` §4-5, Operator-merged) fixed the constraints
+any queue here must obey:
+- **plan = DAG of orthogonal nodes** with pre-req edges (the convergent floor, C1);
+- **node state is DERIVED, never stored** — `DONE ⟺ criteria-green ∧ PR-merged` (C3): a stored
+  status flag is wu-wei's drift trap, refuted by its own scars (C2). The queue file may hold
+  *intent and edges*; it must never hold *truth about completion*;
+- **WIP=1 preserved** — the queue decouples **time**, not adds workers: one converging stream,
+  nodes sequential, sessions non-adjacent. (This is why G0 is not the deferred G8: no concurrency
+  is introduced.)
+- **ground on the remote** — the queue lives in the repo, synced via the existing
+  branch/PR/merge loop, so enqueued intent is durable and Operator-ratifiable like everything else.
+
+Natural seams, noted not designed (form waits for the spine): `d-start` gains a **frontier** line —
+derive and *surface* the ready node(s) at session start (auto-trigger ≠ auto-judgment; executing a
+node stays a disposition); the intake discipline (G1) becomes the queue's *producer* (a commission
+brief decomposes into enqueued nodes); the reflect ledger (G7) meters turns per node.
+
+- falsification_target: any tracked mechanism holding a cross-session work queue / execution plan
+  with derived node state. None exists — `git ls-files` shows no plan kind, and the O3 allowlist
+  has no home for one.
+
 ## 1. The gaps (falsifiable: each dies to one counterexample artifact)
 
 **G1 — No commission-intake discipline (intent → criteria, mechanized).** *Severity: BLOCKING —
@@ -109,6 +153,7 @@ the stack and should close *against* the first real commission, not before it.
 
 | Gap | What it blocks | Close before / with commission |
 |---|---|---|
+| G0 activity queue (turn↔execution decoupling) | any plan longer than a session — including closing the gaps below | **before — first** |
 | G1 intake discipline | the first turn | **before** |
 | G2 product home + propagation | the first commit | **before** (decision: Operator) |
 | G3 behavioral real-half | the first "done" | with (stack-dependent) |
@@ -120,16 +165,23 @@ the stack and should close *against* the first real commission, not before it.
 
 ## 3. Proposed close-order (Builder lane — the Operator disposes)
 
-1. **G2 first, as an Operator decision** — in-repo kind vs commission-per-repo. Everything else
-   shapes around it. (Recommendation: commission-per-repo + a `dyad-rt` bootstrap; keeps the
-   practice repo's invariants clean and makes the runtime reusable — but this is a *right* call,
-   not the agent's.)
-2. **G1 as the first build artifact** — a `d-commission` intake discipline: brief → spine →
-   executable acceptance criteria → regime check → freeze. It is commission-independent and
-   exercises the craft's own core loop.
-3. **G3+G4 against the real commission** — stand up the stack's test/run harness as part of the
+1. **G0 first — the queue is the ground everything else lands on.** Build the activity-queue
+   mechanism (plan kind-home + derived frontier, per the ratified constraints in §0.5) — and then
+   the reflexive move: **this report's remaining close-order becomes the first enqueued plan**,
+   each item a node. From that moment the gaps close across sessions on the queue's clock, not
+   this chat's — which is the capability being proven.
+2. **G2 as an Operator decision, enqueued as a decision-node** — in-repo kind vs
+   commission-per-repo. Everything product-shaped waits on it; nothing practice-shaped does.
+   (Recommendation: commission-per-repo + a `dyad-rt` bootstrap — but this is a *right* call, not
+   the agent's.)
+3. **G1 as the queue's producer** — a `d-commission` intake discipline: brief → spine →
+   executable acceptance criteria → regime check → freeze → **decompose into enqueued nodes**.
+   Commission-independent; exercises the craft's own core loop.
+4. **G3+G4 against the real commission** — stand up the stack's test/run harness as part of the
    commission's first PR, criteria invoking (not re-implementing) the product suite; first use of
    the python3-stdlib hatch likely lands here.
-4. **G5 in the first PR's shape** — every commission PR carries "how to see it working."
-5. **G6 at the first dependency; G7 from turn one** (a reflect/ ledger row per commission).
-6. **G8 stays deferred** until friction forces it.
+5. **G5 in the first PR's shape** — every commission PR carries "how to see it working."
+6. **G6 at the first dependency; G7 from turn one** (a reflect/ ledger row per commission — and
+   per node, once G0 exists).
+7. **G8 stays deferred** until friction forces it. (G0 does not touch it: the queue decouples
+   time, not workers.)
