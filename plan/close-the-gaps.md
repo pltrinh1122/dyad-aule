@@ -37,15 +37,53 @@ NODE N4 deps=N2 done=rt-bootstrap.sh lane=agent :: dyad-rt bootstrap — propaga
 NODE N5 deps=N0 done=pr-experience.sh lane=agent :: Right-half experience path — commission PRs must carry "how to see it working" (G5)
 NODE N6 deps=N0 done=telos-metering.sh lane=agent :: Telos metering — reflect/ ledger convention: turns-to-spine / turns-to-criteria / rework, per node (G7)
 NODE N7 deps=N2,N3 done=commission-1-intake.sh lane=dyad :: First commission intake — Operator supplies a real brief; d-commission runs; G3/G4/G6 decompose into NEW nodes against the real stack (not pre-specced here — form waits for the spine)
+NODE N8 deps=N0 done=provenance.sh lane=agent :: op-provenance enforcement — no Act without ingested intent; binds ARTIFACT mutations only (durability carved out as state capture); path-derived commit classes + CI-level authority; full design in "N8 design notes" below
+NODE N9 deps=N1 done=node-mirror.sh lane=agent :: gh-issue projection of the plan — one issue per node, the Operator's shared-mental-model UI at zero agent-token cost: CI-driven one-way sync repo→issues from DERIVED node state; hand-edits reconciled back and surfaced; issue comments = intake inbox; a view, never a writer; design in "N9 design notes" below
 
 DISPOSITION N2: TODO
 
+### N8 design notes (Operator inputs, 2026-07-07 — intent detail, not status)
+
+- **Carve-out (Operator strike on the first draft):** "mutate" = *actual artifacts* (plans,
+  criteria, anchor, records, code), not *state artifacts*. State capture for resume is
+  Observe-phase capture, not an Act — exempt as a class, no Sense lineage required.
+- **Enforcement design (Operator-recommended):** consolidate state files in a **single
+  kind-home** (`.dyad-state/`, Operator-named 2026-07-07; registered at N8 execution — not before; no empty form). A commit's
+  class is then **derived from its paths, never self-declared**: touches only `.dyad-state/` →
+  state-capture (exempt); touches anything else → artifact mutation → must resolve to a
+  `Node:<id>` in this plan (`intake=#issue` upstream refs per *inbox, never truth*).
+- **Authority at GitHub CI (Operator-recommended):** the PR gate is the authoritative enforcer —
+  remote ground, immune to local `--no-verify`; the pre-commit floor remains the friendly early
+  steering vector. Operator merges exempt.
+- **WIP checkpoints** of in-flight node work touch artifact paths and simply carry their node's
+  trailer — op-durability and op-provenance partition commit-space cleanly instead of colliding.
+- The **op-provenance anchor entry lands WITH the mechanism**, never before it (no
+  asserted-but-unwired invariant).
+
+### N9 design notes (Operator requirement, 2026-07-07 — intent detail, not status)
+
+- **The spine:** the Operator's shared mental model of work activities must live in GitHub's
+  native UI (issues: lists, threading, notifications, mobile) at **zero agent-token cost** — the
+  Operator ingrains by browsing, never by querying the Agent.
+- **Projection, not truth (preserves the §issues decision below):** one gh-issue per plan node,
+  **created/updated/closed by CI on merge, from DERIVED node state** — the sync engine is CI,
+  spending CI minutes, not Agent tokens. The plan file remains the single writer of record.
+- **Level-triggered reconciliation (cairn's derive-from-ground; C2/C3):** a hand-closed or
+  hand-edited issue is corrected on the next sync and the drift is *surfaced*, never silently
+  absorbed — the mirror is a cache with a tripwire (the concurrency evaluation's sanctioned
+  narrow borrow from wu-wei), never a second writer.
+- **The inbox loop closes here:** issue *comments* and *new* Operator-filed issues are the
+  sanctioned async intake (*inbox, never truth*) — consumed by intake (N3) into replanning PRs.
+- deps=N1 because projection needs mechanized node-state derivation to know what to mirror.
+
 ## Recommended pick order (proposal — the frontier is the fact, this is the preference)
 
-Once N0 merges, the frontier is {N1, N2, N3, N5, N6}. Recommended: **N1 first** (the queue
-becomes self-deriving — every later node benefits), then **N3**, then **N5/N6** (small,
-independent). **N2 runs on the Operator's clock**, not the agent's WIP — disposing it any time
-unblocks N4 (conditionally) and, with N3, the commission itself (N7).
+Once N0 merges, the frontier is {N1, N2, N3, N5, N6, N8}. Recommended: **N1 first** (the queue
+becomes self-deriving — every later node benefits), then **N8** (the provenance floor — from it
+onward every node's work is traced, closing the SPAOR bypass the Operator probed 2026-07-07),
+then **N3**, then **N5/N6** (small, independent). **N2 runs on the Operator's clock**, not the
+agent's WIP — disposing it any time unblocks N4 (conditionally) and, with N3, the commission
+itself (N7).
 
 ## Why the nodes are not GitHub issues (Operator probe, 2026-07-07)
 
@@ -67,6 +105,13 @@ Decided: **no — the plan file is the node home**, on grounds already ratified 
   anywhere, no git client, exactly G0's "intent needs somewhere durable to land mid-execution."
   Sanctioned future option for N3's intake: *issue = proposed intent → d-commission → ratified
   node via PR.* **Inbox, never truth.**
+
+**Addendum (Operator requirement, 2026-07-07):** the Operator's shared mental model needs the
+*UI surface* of issues — browsable without burning Agent tokens. Landed as **N9**: every node
+gains a gh-issue as a **CI-synced projection of derived state** — the view the Operator reads,
+never a writer. The decision above stands unchanged: truth stays in this file; the mirror is a
+reconciled cache with drift surfaced (C2/C3), and the inbox role now has its concrete mechanism
+(issue comments → N3 intake → replanning PR).
 
 ## Deliberately absent
 
