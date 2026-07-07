@@ -20,7 +20,7 @@ Each artifact-kind has exactly **one home**. A fact lives in one place; cross-re
 | `README.md` | front door | outsider orientation + the **organizational invariants** (below) |
 | `check` | runner | the real-half check — runs every `criteria/` file |
 | `criteria/` | checks | executable acceptance criteria (one file per task) |
-| `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), the boundary enforcer (`dyad-rt`), and the Start Session Discipline (`d-start`) |
+| `bin/` | runtime | **dyad-rt** — the launcher (`claude`), physical wrappers (`git`, `gh`), the boundary enforcer (`_dyad-rt`), and the Start Session Discipline (`d-start`, with its internal `_reconcile` helper). Internal scripts carry the `_` prefix (O9). |
 | `.githooks/` | runtime floor | git-hook hard floor (`pre-commit`, `pre-push`) — refuses main-mutations even on raw `git` |
 | `retro/` | ledger | the convergence ledger (turns-per-slot, accelerators, turn-sinks) |
 | `dialectic/` | reports | falsifiable reports & cross-dyad analysis (the published home for claims) |
@@ -40,8 +40,10 @@ the exact failure our peers exhibit, where the anchor no longer matches the engi
 | **O3** | **Minimal, predictable root** — each artifact-kind has one directory; root holds only the anchor, entry points, and config. | separation of concerns; legible top-level | ✅ `check` — root allowlist, no stray files |
 | **O4** | **Hygiene** — no secrets, build artifacts, scratch, or transient state committed; `.gitignore` enforces it. | `.gitignore` hygiene; no secrets in VCS | ✅ `check` — `.gitignore` present, no cruft tracked |
 | **O5** | **Executable, remotely-grounded criteria** — acceptance criteria are runnable (`criteria/` + `./check`) and run in CI on every PR. | CI gates on PR; automated checks | ✅ `check` locally **+ CI on every PR** (`.github/workflows/check.yml`) — closes the local≠remote split-brain in `dialectic/` |
-| **O6** | **Branch → PR → Operator-merge** — never commit to `main`; the Operator merges. | protected `main` + PR review | ✅ **dyad-rt** enforces it — `.githooks` floor (fires on raw `git`) + `bin/git`·`bin/gh` wrappers + `bin/dyad-rt` enforcer, proven by `criteria/dyad-rt.sh`; policy home stays `DYAD.md` → `op-durability`/`op-PR` |
+| **O6** | **Branch → PR → Operator-merge** — never commit to `main`; the Operator merges. | protected `main` + PR review | ✅ **dyad-rt** enforces it — `.githooks` floor (fires on raw `git`) + `bin/git`·`bin/gh` wrappers + `bin/_dyad-rt` enforcer, proven by `criteria/dyad-rt.sh`; policy home stays `DYAD.md` → `op-durability`/`op-PR` |
 | **O7** | **Public repo declares a license.** | `LICENSE` file on public repos | ✅ **`LICENSE`** — 0BSD (Zero-Clause BSD), the most permissive OSI-approved license (no attribution required) |
+| **O8** | **`d-*` names an operator discipline** — the `d-` prefix is reserved for Operator-invoked disciplines (the tokens the Operator types, e.g. `d-start`); internal machinery is named without it. | intent-revealing names; reserved-namespace hygiene | ✅ `check` — `bin/d-*` / `criteria/d-*.sh` must be in the operator-discipline allowlist |
+| **O9** | **`_*` marks internal** — a `bin/` script the Operator never invokes directly carries the `_` prefix (`_dyad-rt`, `_reconcile`); public entry points (`claude`, `git`, `gh`, `d-start`) do not. | `_private` naming idiom; public/internal split | ✅ `check` — every `bin/` file is either allowlisted-public or `_`-prefixed |
 
 ## Verify
 

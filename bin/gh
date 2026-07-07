@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # bin/gh — dyad-rt physical wrapper for gh (Execution Sandbox Invariant).
 #
-# Routes gh through bin/dyad-rt (the enforcer) before the real gh. aule's gh boundary:
+# Routes gh through bin/_dyad-rt (the enforcer) before the real gh. aule's gh boundary:
 # `gh pr merge` is REFUSED — merge-to-main is the Operator's canonical *right* judgment
 # (op-PR, DYAD.md), never the agent's. Everything else (pr create/view/status, issue, auth)
-# is allowed, so op-durability/op-PR run for real. Policy lives in bin/dyad-rt — not here.
+# is allowed, so op-durability/op-PR run for real. Policy lives in bin/_dyad-rt — not here.
 #
 # NB: this differs from dyad-cairn's bin/gh, which self-merges autonomously. aule's op-PR
 # reserves merge for the Operator — same runtime shape, aule's own boundary.
@@ -17,6 +17,6 @@ PATH="$(echo "$PATH" | sed -e "s|$MY_BIN:||g" -e "s|:$MY_BIN||g" -e "s|^$MY_BIN\
 export PATH
 REAL_GH="$(command -v gh)" || { echo "bin/gh: real 'gh' not found after de-shadowing bin/." >&2; exit 127; }
 
-"$MY_BIN/dyad-rt" check-gh "$@"
+"$MY_BIN/_dyad-rt" check-gh "$@"
 
 exec "$REAL_GH" "$@"
