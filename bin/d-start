@@ -93,6 +93,18 @@ if git rev-parse --verify -q origin/main >/dev/null 2>&1; then
   fi
 fi
 
+# ── 6. Plan frontier (op-queue; plan node N1) — state derived from ground on every run, never
+#      stored. SURFACED ONLY: picking a node stays a disposition (auto-trigger ≠ auto-judgment). ──
+if [ -x bin/_frontier ]; then
+  fr="$(./bin/_frontier 2>&1)"
+  add "Plan     :"
+  if [ -n "$fr" ]; then
+    while IFS= read -r pl; do [ -n "$pl" ] && add "         · $pl"; done <<<"$fr"
+  else
+    add "         · frontier empty — no READY nodes (plan complete or all blocked)."
+  fi
+fi
+
 # ── Output ──
 printf '%s\n\n' "dyad-aule d-start — Start Session Discipline (real-half self-cert). Read DYAD.md; d-start grounds *real*, the merge is *right* (the Operator's)."
 printf '%s\n' "${lines[@]}"
