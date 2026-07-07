@@ -100,6 +100,35 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   DENY main-mutations **and** ALLOW a working-branch push) — the fidelity move a peer's asserted-
   but-unwired guard skips.
 
+- **op-portability** *(Operator attestation, 2026-07-07)* — the practice runs wherever dyad
+  operators are: Linux, macOS, Windows. Portability is **in-regime, never asserted** — proven
+  per-push by the 3-OS CI matrix (the windows leg rides git's own bash) + the shellcheck
+  portable-subset gate. Source: `dialectic/2026-07-07-criteria-primitive-sh-vs-py.md` §7 (C3′ —
+  the Operator's falsification of C3-as-scoped, registered and enforced).
+
+- **op-substrate** *(Operator, 2026-07-07)* — practice machinery keeps a **minimal,
+  provenance-known dependency surface**: single-upstream tools (git/gh) as the ground; text-glue
+  held to the POSIX intersection by an executable denylist gate (C4, negative-controlled); and
+  when capability outgrows shell, the sanctioned overflow is **open-source, in-language,
+  agent-maintainable** code (python3-stdlib) — never third-party binaries, which re-import
+  disparate vendors plus a supply chain. Source: same DR, §8 (the Operator's provenance +
+  agent-maintainability objections, conceded on the glue axis and priced).
+
+- **op-queue** *(Operator, 2026-07-07)* — **the chat-turn is not the unit of execution.** Work
+  that spans sessions lives as a plan-DAG in `plan/`: nodes execute in dependency order but
+  temporally non-adjacent; the plan holds *intent and edges only* — node state is **derived**
+  (done-criteria on `origin/main`; DISPOSITION lines for Operator decisions), never stored;
+  **WIP=1** — the queue decouples *time*, not workers (the concurrency ceiling stays a separate,
+  deferred question). Source: readiness G0 (`dialectic/2026-07-07-build-commission-readiness.md`
+  §0.5); contract in `plan/close-the-gaps.md`; shape enforced by `criteria/plan-dag.sh`.
+
+- **op-SoT** *(Operator, 2026-07-07)* — every operational fact has **exactly one repo-grounded
+  home** that is merge-gated and `./check`-reachable. External mutable stores (gh-issues, labels,
+  any UI-flippable state) may serve as **intent inboxes, never as truth** — the wu-wei
+  three-pointer drift is the standing counterexample. O2's single-home rule, widened from
+  documents to runtime state. Source: the Operator's durability/SoT probe, recorded in
+  `plan/close-the-gaps.md` §"Why the nodes are not GitHub issues".
+
 - **precondition (honest flag):** the *cloud* half of both needs a configured remote.
   The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
   authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
@@ -166,6 +195,8 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
 
 Artifact-kinds the craft produces, each with a **single home** (inherited from the Commons'
 one-file-per-writer grain — a fact lives in exactly one; cross-references point, never copy).
+Kind-homes are named for the SPAOR phase they serve where one applies (Operator direction,
+2026-07-07): `plan/` = **Plan**, `reflect/` = **Reflect** (`retro` deprecated).
 The **live layout map + the organizational invariants live in `README.md`** — the
 authoritative, `./check`-enforced home for how this repo is structured (front door for an
 outsider, per invariant O1). New kinds are registered there as they accrue.
@@ -189,5 +220,11 @@ Dyad-specific terms in active use, added to the form's G0 seed vocabulary:
   of the boundary policy). See `op-runtime`.
 - **d-start** — the Start Session Discipline: the token that runs `bin/d-start`, the real-half
   self-certification that the `dyad-rt` runtime is live and memory is durable. See `session-discipline`.
+- **plan-node / frontier** — a scoped unit of the activity queue (`plan/`): intent + edges +
+  done-condition, state always derived. The **frontier** is the set of nodes whose deps are DONE;
+  WIP=1 picks one. See `op-queue`.
+- **inbox, never truth** — the rule for external mutable stores (gh-issues et al.): they may
+  *receive* intent asynchronously; truth lives only in the repo-grounded, merge-gated home. See
+  `op-SoT`.
 
 Canonicalized as they stabilize; this stub grows, it does not ossify.
