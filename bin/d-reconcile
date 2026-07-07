@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# bin/d-reconcile — safe start-of-session reconcile to a clean baseline (the reconcile half of d-start).
+#
+# WHY: we are not guaranteed to LEAVE or RESTART clean — a session can crash mid-branch, or a PR can
+#   merge remotely while we were away. Left unmechanized, this became a hand-run "cleanup" (switch to
+#   main, pull, delete the merged branch, prune) that depended on the agent remembering. This folds it
+#   into the start routine so the baseline is reached mechanically. Referenced in spirit from dyad-bond's
+#   resume automation (bin/standup.sh); aule's own.
+#
+# THE SAFETY ENVELOPE (fidelity — NEVER lose ungrounded work). It acts ONLY where git itself guarantees
+#   safety, and SURFACES (never touches) anything unsafe:
+#   - uncommitted (dirty) tree     → STOP. Never auto-commit, never switch away. Surface + exit.
+#   - committed-but-unpushed work  → PUSH the working branch first (op-durability sanctions pushing a
+#                                    working branch), GROUNDING it before any switch/delete. If the push
+#                                    fails (offline), STOP — nothing stranded or deleted.
+#   - clean + fully backed up      → switch to main, fast-forward it, and delete ONLY fully-merged
+#                                    branches (`git branch -d` REFUSES unmerged → an unmerged WIP branch
+#                                    is preserved, named, with its resume command). Never a force/-D.
+#   Operator disposition (2026-07-07): auto-push + auto-reconcile the safe cases; report every action.
+#
+# It operates on the git repo at the CURRENT WORKING DIRECTORY (so it is testable against a fixture).
+# The protected branch name is read from the single source, `bin/dyad-rt protected`.
+#
+# Usage:  bin/d-reconcile            # reconcile the cwd repo to a clean baseline (acts, reports each act)
+#         bin/d-reconcile --dry-run  # read-only: report the plan, touch nothing (no fetch/push/switch/delete)
+# Exit:   0 = reconciled (or nothing to do) · 1 = surfaced a blocking seam (dirty / push failed)
+set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN="$("$SELF/dyad-rt" protected 2>/dev/null || echo main)"
+DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
+
+say() { printf '%s\n' "$1"; }
+run() { # run "<report on success>" <cmd...> ; echoes and returns cmd status
+  local msg="$1"; shift
+  if [ "$DRY" = 1 ]; then say "would: $msg"; return 0; fi
+  if "$@" >/dev/null 2>&1; then say "✓ $msg"; return 0; else say "⚠ FAILED: $msg"; return 1; fi
+}
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+
+# A. Fetch — best-effort, read-only. Skipped in --dry-run (a dry run must have zero side effects).
+if [ "$DRY" = 1 ]; then
+  say "would: git fetch --prune origin"
+elif git fetch --prune origin >/dev/null 2>&1; then
+  say "✓ fetched origin (pruned stale remote refs)"
+else
+  say "· could not fetch (offline?) — reconciling against last-seen origin"
+fi
+
+# B. Dirty tree → STOP. Uncommitted work is never auto-touched.
+if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+  say "⚠ uncommitted changes on '$branch' — reconcile STOPPED; commit or stash first (never auto-touched)."
+  exit 1
+fi
+
+# C. Ground committed-but-unpushed work on a working branch before any switch/delete.
+unbacked="$(git rev-list --count HEAD --not --remotes 2>/dev/null || echo 0)"
+if [ "$branch" != "$MAIN" ] && [ "$unbacked" != "0" ]; then
+  if ! run "pushed $unbacked unbacked commit(s) on '$branch' → origin (grounded)" git push -u origin "$branch"; then
+    say "⚠ '$branch' has $unbacked unbacked commit(s) and the push failed — reconcile STOPPED (nothing stranded/deleted)."
+    exit 1
+  fi
+elif [ "$branch" = "$MAIN" ] && [ "$unbacked" != "0" ]; then
+  say "⚠ local $MAIN has $unbacked commit(s) not on origin — unexpected (the floor blocks $MAIN commits); investigate, not auto-touched."
+fi
+
+# D. Get to a fresh main (we are clean + backed up here).
+if [ "$branch" != "$MAIN" ]; then
+  run "switched '$branch' → $MAIN" git switch "$MAIN" || exit 1
+fi
+if git rev-parse --verify -q "origin/$MAIN" >/dev/null 2>&1; then
+  behind="$(git rev-list --count "$MAIN..origin/$MAIN" 2>/dev/null || echo 0)"
+  [ "$behind" != "0" ] && run "fast-forwarded $MAIN → origin/$MAIN (+$behind)" git merge --ff-only "origin/$MAIN"
+fi
+
+# E. Delete ONLY branches merged INTO MAIN; preserve + name the rest.
+#    NB: `git branch -d` alone is NOT the right gate — it also deletes a branch merged into its UPSTREAM
+#    (so a pushed-but-unmerged-to-main WIP branch would be silently removed). We gate on the explicit
+#    `git branch --merged $MAIN` set so an unmerged WIP is always preserved locally, per the envelope.
+merged=" $(git branch --merged "$MAIN" 2>/dev/null | tr -d '* ' | tr '\n' ' ') "
+for b in $(git for-each-ref --format='%(refname:short)' refs/heads/ 2>/dev/null); do
+  [ "$b" = "$MAIN" ] && continue
+  case "$merged" in
+    *" $b "*) run "deleted merged branch '$b'" git branch -d "$b" ;;
+    *)        say "· kept unmerged branch '$b' (resume: git switch $b)" ;;
+  esac
+done
+exit 0

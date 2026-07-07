@@ -149,12 +149,16 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
 - **session-discipline (`d-start`)** — the Operator opens a session with the **`d-start`** token;
   the agent's first act is to run **`bin/d-start`** and surface its report before other work. It is
   the *real*-half self-certification of the runtime: it grounds mechanical state — the `dyad-rt`
-  floor is wired (`core.hooksPath`), `./check` is green, memory is durable, main is in sync — and
-  **surfaces** every seam without judging (`auto-trigger ≠ auto-judgment`; the *right* half stays the
-  Operator's). Its one sanctioned action is auto-repairing the `core.hooksPath` wiring, reported
-  visibly. Referenced from dyad-bond's Start Session Discipline (`bin/standup.sh`); aule's own. It
-  closes the self-cert gap this dyad hit: after the launcher turns the native gate off, `d-start`
-  proves the replacement guard is really live.
+  floor is wired (`core.hooksPath`), the baseline is clean, `./check` is green, memory is durable,
+  main is in sync — and **surfaces** every seam without judging (`auto-trigger ≠ auto-judgment`; the
+  *right* half stays the Operator's). It has **two sanctioned autonomous acts**, both reported loudly:
+  auto-repairing the `core.hooksPath` wiring, and a **safe reconcile** (`bin/d-reconcile`) that closes
+  the "we didn't leave/restart clean" gap — fetch, push unbacked work to ground it, then switch to a
+  fresh main and delete branches **merged into main**, acting only where no ungrounded work can be
+  lost (dirty/unpushed work is surfaced, never touched; unmerged WIP is preserved and named). Both are
+  Operator dispositions, not agent self-grants. Referenced from dyad-bond's Start Session Discipline
+  (`bin/standup.sh`); aule's own. It closes the self-cert gap this dyad hit: after the launcher turns
+  the native gate off, `d-start` proves the replacement guard is really live — and the baseline sound.
 - **deferred (unpracticed):** a **concurrency ceiling** (parallel agents/worktrees) — no real
   friction has set it yet, so landing it now would be form ahead of the spine. Honest defer.
 
