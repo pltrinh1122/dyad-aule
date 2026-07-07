@@ -4,7 +4,7 @@
 # from its own stated organization (the failure our peers exhibit — see dialectic/).
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
-cd "$repo"
+cd "$repo" || exit 1
 
 # O1 — front door.
 assert "O1: root README.md exists"            test -f README.md

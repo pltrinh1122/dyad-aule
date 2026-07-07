@@ -3,6 +3,12 @@ name: check
 # The real-half check, run on the REMOTE ground (not local-only). This closes the
 # local≠remote split-brain both peers hit (see dialectic/) and makes org-invariant O5 live:
 # acceptance criteria are executed automatically on every PR and on main.
+#
+# 3-OS matrix (Operator attestation, 2026-07-07): other dyad operators run macOS and Windows,
+# so portability is in-regime — see dialectic/2026-07-07-criteria-primitive-sh-vs-py.md §7.
+# The bash the check rides is git's own distribution on every leg (Git for Windows ships it;
+# `shell: bash` below selects it on the windows runner). The shellcheck job is the
+# portable-subset gate for the whole shell corpus — the claim is proven per-push, not asserted.
 on:
   pull_request:
   push:
@@ -10,10 +16,24 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive   # criteria read commons/ — the registry entry must be present
       - name: Run the real-half check
         run: ./check
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable-subset gate (whole shell corpus)
+        run: shellcheck -S warning check criteria/*.sh bin/git bin/gh bin/d-start bin/_dyad-rt bin/_reconcile .githooks/pre-commit .githooks/pre-push

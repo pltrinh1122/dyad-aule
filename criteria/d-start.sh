@@ -5,7 +5,7 @@
 # ./check — a live reconcile would switch branches mid-check, and calling ./check would recurse).
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
-cd "$repo"
+cd "$repo" || exit 1
 ds="$repo/bin/d-start"
 
 # Present + committed executable (git 100755 — the O5/PR#6 lesson: a working-tree +x can mask 100644).

@@ -6,7 +6,7 @@
 # branch push — a guard that denies everything proves nothing, so the positive control is load-bearing.
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
-cd "$repo"
+cd "$repo" || exit 1
 rt="$repo/bin/_dyad-rt"
 
 # --- The enforcer fires: DENIES the forbidden mutations (exit nonzero). ---
