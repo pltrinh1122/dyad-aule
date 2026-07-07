@@ -152,7 +152,7 @@ How this dyad's engine runs — the Contract leaves these open; set per lived pr
   floor is wired (`core.hooksPath`), the baseline is clean, `./check` is green, memory is durable,
   main is in sync — and **surfaces** every seam without judging (`auto-trigger ≠ auto-judgment`; the
   *right* half stays the Operator's). It has **two sanctioned autonomous acts**, both reported loudly:
-  auto-repairing the `core.hooksPath` wiring, and a **safe reconcile** (`bin/d-reconcile`) that closes
+  auto-repairing the `core.hooksPath` wiring, and a **safe reconcile** (`bin/reconcile`) that closes
   the "we didn't leave/restart clean" gap — fetch, push unbacked work to ground it, then switch to a
   fresh main and delete branches **merged into main**, acting only where no ungrounded work can be
   lost (dirty/unpushed work is surfaced, never touched; unmerged WIP is preserved and named). Both are

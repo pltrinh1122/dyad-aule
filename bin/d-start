@@ -9,7 +9,7 @@
 #
 # WHAT IT DOES — grounds *real* only; never certifies *right* (the Operator's, sealed by the merge):
 #   1. Runtime  — is the .githooks floor wired (core.hooksPath)?  [auto-repairs it, visibly — sanctioned]
-#   2. Reconcile— get to a clean baseline (bin/d-reconcile): fetch, push unbacked work, switch to a fresh
+#   2. Reconcile— get to a clean baseline (bin/reconcile): fetch, push unbacked work, switch to a fresh
 #                 main + delete merged branches — ONLY where git guarantees safety; dirty/unpushed work is
 #                 surfaced, never touched. Covers the "we didn't leave/restart clean" gap.
 #   3. Real     — run ./check (grounds every criteria/ file) and report the verdict.
@@ -43,16 +43,16 @@ else
   add "Runtime  : ✓ core.hooksPath=.githooks — the .githooks floor fires (even on raw git)."
 fi
 rt_missing=()
-for s in bin/dyad-rt bin/d-reconcile .githooks/pre-commit .githooks/pre-push bin/git bin/gh; do
+for s in bin/dyad-rt bin/reconcile .githooks/pre-commit .githooks/pre-push bin/git bin/gh; do
   [ -x "$s" ] || rt_missing+=("$s")
 done
 if ((${#rt_missing[@]})); then
   add "         ⚠ not executable/present: ${rt_missing[*]} — the guard cannot fully fire."; flag
 fi
 
-# ── 2. Reconcile to a clean baseline (safe-auto; bin/d-reconcile owns the safety envelope) ──
-if [ "$DIAG" = 1 ]; then rec="$(./bin/d-reconcile --dry-run 2>&1)"; recrc=0
-else                     rec="$(./bin/d-reconcile 2>&1)";           recrc=$?; fi
+# ── 2. Reconcile to a clean baseline (safe-auto; bin/reconcile owns the safety envelope) ──
+if [ "$DIAG" = 1 ]; then rec="$(./bin/reconcile --dry-run 2>&1)"; recrc=0
+else                     rec="$(./bin/reconcile 2>&1)";           recrc=$?; fi
 add "Reconcile:"
 while IFS= read -r rl; do [ -n "$rl" ] && add "         · $rl"; done <<<"$rec"
 [ "$recrc" != 0 ] && flag

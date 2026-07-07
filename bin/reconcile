@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/d-reconcile — safe start-of-session reconcile to a clean baseline (the reconcile half of d-start).
+# bin/reconcile — safe start-of-session reconcile to a clean baseline (the reconcile half of d-start).
 #
 # WHY: we are not guaranteed to LEAVE or RESTART clean — a session can crash mid-branch, or a PR can
 #   merge remotely while we were away. Left unmechanized, this became a hand-run "cleanup" (switch to
@@ -21,8 +21,8 @@
 # It operates on the git repo at the CURRENT WORKING DIRECTORY (so it is testable against a fixture).
 # The protected branch name is read from the single source, `bin/dyad-rt protected`.
 #
-# Usage:  bin/d-reconcile            # reconcile the cwd repo to a clean baseline (acts, reports each act)
-#         bin/d-reconcile --dry-run  # read-only: report the plan, touch nothing (no fetch/push/switch/delete)
+# Usage:  bin/reconcile            # reconcile the cwd repo to a clean baseline (acts, reports each act)
+#         bin/reconcile --dry-run  # read-only: report the plan, touch nothing (no fetch/push/switch/delete)
 # Exit:   0 = reconciled (or nothing to do) · 1 = surfaced a blocking seam (dirty / push failed)
 set -uo pipefail
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

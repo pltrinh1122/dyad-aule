@@ -36,4 +36,15 @@ assert "O5: CI runs the check"                 bash -c "grep -rqF './check' .git
 # O7 — public repo declares a license.
 assert "O7: LICENSE present"                    test -f LICENSE
 
+# O8 — the `d-*` prefix is reserved for OPERATOR-INVOKED disciplines (the tokens the Operator types),
+# never internal machinery (Operator convention, 2026-07-07). Any bin/d-* or criteria/d-*.sh must name
+# a sanctioned discipline in the allowlist below; the list grows as disciplines land.
+OPERATOR_DISCIPLINES=" d-start "
+strayd=""
+for f in $(git ls-files 'bin/d-*' 'criteria/d-*.sh'); do
+  base="$(basename "$f" .sh)"
+  case "$OPERATOR_DISCIPLINES" in *" $base "*) : ;; *) strayd="$strayd $f" ;; esac
+done
+if [ -z "$strayd" ]; then echo "  ok   O8: d-* prefix only on operator disciplines"; else echo "  MISS O8: d-* on non-operator (internal) file(s):$strayd — rename without the d- prefix"; _fails=$((_fails+1)); fi
+
 assert_done
