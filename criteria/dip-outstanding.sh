@@ -18,8 +18,8 @@ absent "no un-wired real-half TODO in DYAD.md"    "$dyad" "TODO: wire the real-h
 absent "DYAD.md no longer claims the remote unwired"  "$dyad" "None is wired yet"
 assert "DYAD.md records the live remote"          grep -qF "The remote is live" "$dyad"
 
-# 4. The deferred DIP dimensions are annotated honestly (not silent).
-assert "DYAD.md marks the deferred DIP dimensions" grep -qF "Deferred DIP dimensions" "$dyad"
+# 4. The DIP dimensions are addressed, not silent gaps (landed or honestly deferred).
+assert "DYAD.md addresses the DIP dimensions"     grep -qF "## DIP dimensions" "$dyad"
 assert "operator hats (#4) captured"              grep -qF "Commons steward" "$dyad"
 
 # 5. The directory entry carries real summits, no placeholder.
