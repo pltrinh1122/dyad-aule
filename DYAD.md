@@ -157,6 +157,18 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   early-steered by the `.githooks/commit-msg` floor, policy single-homed in
   `bin/_dyad-rt check-provenance`; `d-start` surfaces untraced unpushed commits as a seam.
 
+- **op-ui-links** *(Operator-directed 2026-07-08; the dyad's UI invariant)* —
+  **Operator-facing surfaces hyperlink every referenced artifact.** A node-issue body, and any
+  surface the Operator reads during **disposition** (`d-land` / review), renders its referenced
+  artifacts — the `Done:` criteria, dialectics, files, plan-cache, deps — as **click-through links,
+  never bare text**. *Telos accounting:* disposition is the Operator spending attention in turns; a
+  bare reference costs a *hunt*, a link costs a *click* — so hyperlinking is turn-minimization at the
+  disposition boundary, not decoration. In-regime, never asserted: mechanized in `bin/_node linkify`
+  (GitHub blob-URL rendering, repo **derived from the remote** — no hardcoded vendor path,
+  `op-substrate`), enforced by `criteria/ui-links.sh` (a node-issue body's artifact references are
+  markdown links). GitHub already auto-links `#issue`/commit refs; this covers the file artifacts it
+  does not.
+
 - **precondition (honest flag):** the *cloud* half of both needs a configured remote.
   The remote is live — `origin → github.com/pltrinh1122/dyad-aule` (public), `gh`
   authed — so `op-durability` (push a working branch) and `op-PR` (cut a PR the operator
