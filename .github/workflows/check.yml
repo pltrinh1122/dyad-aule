@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Portable-subset gate (whole shell corpus)
-        run: shellcheck -S warning check criteria/*.sh bin/git bin/gh bin/d-start bin/_dyad-rt bin/_reconcile bin/_frontier bin/_board .githooks/pre-commit .githooks/pre-push .githooks/commit-msg
+        run: shellcheck -S warning check criteria/*.sh bin/git bin/gh bin/d-start bin/_dyad-rt bin/_reconcile bin/_frontier bin/_board bin/_node .githooks/pre-commit .githooks/pre-push .githooks/commit-msg
 
   provenance:
     # op-provenance (plan node N8) — the AUTHORITATIVE gate: every artifact-mutating commit in the
