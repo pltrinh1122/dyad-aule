@@ -18,5 +18,6 @@ export PATH
 REAL_GH="$(command -v gh)" || { echo "bin/gh: real 'gh' not found after de-shadowing bin/." >&2; exit 127; }
 
 "$MY_BIN/_dyad-rt" check-gh "$@"
+"$MY_BIN/_state-guard" check-gh-transition "$@"   # node-lifecycle FSM guard (N14)
 
 exec "$REAL_GH" "$@"
