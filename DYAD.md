@@ -114,20 +114,27 @@ Standing dispositions the agent holds **without prompting** — about how the dy
   disparate vendors plus a supply chain. Source: same DR, §8 (the Operator's provenance +
   agent-maintainability objections, conceded on the glue axis and priced).
 
-- **op-queue** *(Operator, 2026-07-07)* — **the chat-turn is not the unit of execution.** Work
-  that spans sessions lives as a plan-DAG in `plan/`: nodes execute in dependency order but
-  temporally non-adjacent; the plan holds *intent and edges only* — node state is **derived**
-  (done-criteria on `origin/main`; DISPOSITION lines for Operator decisions), never stored;
-  **WIP=1** — the queue decouples *time*, not workers (the concurrency ceiling stays a separate,
-  deferred question). Source: readiness G0 (`dialectic/2026-07-07-build-commission-readiness.md`
-  §0.5); contract in `plan/close-the-gaps.md`; shape enforced by `criteria/plan-dag.sh`.
+- **op-queue** *(Operator, 2026-07-07; home flipped to issues by N11, 2026-07-08)* —
+  **the chat-turn is not the unit of execution.** Work that spans sessions lives as **node-issues** (issues-as-home,
+  N11): one GitHub issue = one node (body = intent + `Depends-on:` edges + `Done:`), executing in
+  dependency order but temporally non-adjacent. Lifecycle **status is STORED** (exactly one
+  `status:*` lane — re-derivation is too expensive, C2's own bound) and kept honest as a **checked
+  cache** by the FSM guard (`criteria/state-guard.sh`); the offline projection lives in
+  `.dyad-state/plan-cache/` (N15). **WIP=1** — the queue decouples *time*, not workers. Source:
+  readiness G0 (`dialectic/2026-07-07-build-commission-readiness.md` §0.5) as amended by the
+  plan-home ruling (`dialectic/2026-07-08-plan-home-local-vs-issues.md`); schema enforced by
+  `criteria/issue-node-schema.sh`.
 
 - **op-SoT** *(Operator, 2026-07-07)* — every operational fact has **exactly one repo-grounded
   home** that is merge-gated and `./check`-reachable. External mutable stores (gh-issues, labels,
   any UI-flippable state) may serve as **intent inboxes, never as truth** — the wu-wei
   three-pointer drift is the standing counterexample. O2's single-home rule, widened from
   documents to runtime state. Source: the Operator's durability/SoT probe, recorded in
-  `plan/close-the-gaps.md` §"Why the nodes are not GitHub issues".
+  `dialectic/2026-07-08-plan-home-local-vs-issues.md`.
+  - **SUPERSEDED-IN-FLIGHT (N11 ruling, 2026-07-08):** the Operator ruled **issues-as-home** — gh-issues
+    are now the node *intent* home (their durability + portability the dominant capability), so "never
+    as truth" no longer holds for the node queue. The single-home principle stands; the home moved.
+    Full reword lands via **N12** (issue #37). Truth about *real* still never leaves the merge-gate.
 
 - **op-intent** *(learning-invariant; Operator-proposed 2026-07-07; wording = the falsification
   survivor, `dialectic/2026-07-07-learning-invariant-intent-first.md`)* —

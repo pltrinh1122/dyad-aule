@@ -21,6 +21,9 @@ _mkfix() {
   mkdir -p "$d/work/plan" "$d/work/.dyad-state"
   printf '%s\n' 'NODE X deps=- done=x.sh lane=agent :: a ratified node' >"$d/work/plan/p.md"
   printf '%s\n' 'seed' >"$d/work/.dyad-state/seed.txt"
+  # issues-as-home (N11/N16): a node id is a GitHub issue number, resolved against the plan-cache.
+  mkdir -p "$d/work/.dyad-state/plan-cache"
+  printf 'CACHE-NODE #42 status=clarify deps=- done=x.sh :: a cached node-issue\n' >"$d/work/.dyad-state/plan-cache/42.md"
   git -C "$d/work" add -A
   git -C "$d/work" commit -q --no-verify -m init
   git -C "$d/work" branch -M work
@@ -54,6 +57,14 @@ scen_unit() {
   git -C "$w" switch -q work
   git -C "$w" merge -q --no-ff --no-verify -m "merge side" side >/dev/null 2>&1
   ( cd "$w" && "$RT" check-provenance HEAD ) >/dev/null 2>&1 || ok=0
+  # f) issues-as-home: artifact commit with Node: #42 (in cache) → ALLOW
+  printf '%s\n' f1 >"$w/f1.txt"; git -C "$w" add f1.txt
+  git -C "$w" commit -q --no-verify -m "$(printf 'work\n\nNode: #42')"
+  ( cd "$w" && "$RT" check-provenance HEAD ) >/dev/null 2>&1 || ok=0
+  # g) Node: #77 (NOT in cache) → DENY
+  printf '%s\n' f2 >"$w/f2.txt"; git -C "$w" add f2.txt
+  git -C "$w" commit -q --no-verify -m "$(printf 'work\n\nNode: #77')"
+  ( cd "$w" && "$RT" check-provenance HEAD ) >/dev/null 2>&1 && ok=0
   rm -rf "$d"
   [ "$ok" = 1 ]
 }

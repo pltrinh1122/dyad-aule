@@ -20,8 +20,12 @@ if [ -z "$stray" ]; then echo "  ok   O3: root minimal (no stray entries)"; else
 # O3 — each declared artifact-kind has its home. `reflect/` is the SPAOR Reflect phase's ledger
 # (Operator deprecated the term `retro`, 2026-07-07); the tombstone assert keeps the old home from
 # silently coming back on a stale-branch merge.
-for d in criteria reflect dialectic dm plan .dyad-state; do assert "O3: kind-home $d/ present" test -d "$d"; done
+for d in criteria reflect dialectic dm .dyad-state; do assert "O3: kind-home $d/ present" test -d "$d"; done
 assert "O3: deprecated kind-home retro/ absent (renamed reflect/)" bash -c '[ ! -d retro ] && [ -z "$(git ls-files retro/)" ]'
+# The plan/ file-home was RETIRED by N16 (issues-as-home flip, N11): nodes live as gh-issues,
+# offline-cached in .dyad-state/plan-cache/. Tombstone keeps the file-plan from returning on a stale merge.
+assert "O3: retired kind-home plan/ absent (moved to issues, N16)" bash -c '[ ! -d plan ] && [ -z "$(git ls-files plan/)" ]'
+assert "O3: node-cache home present (.dyad-state/plan-cache)" test -d .dyad-state/plan-cache
 
 # O4 — hygiene: .gitignore present and no cruft tracked.
 assert "O4: .gitignore present"               test -f .gitignore

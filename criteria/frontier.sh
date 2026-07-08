@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Acceptance criteria for plan node N1 — bin/_frontier (derive node state from ground) and the
-# d-start Plan seam. Behavior is proven in a THROWAWAY fixture (bare origin + work clone, all
-# file:// — no network) exercising every derivation rule of the queue's contract; the real repo
-# is asserted only on facts stable for all time (N0 is DONE forever; the tool runs clean).
-# Surfaced-never-executed is structural: _frontier only prints; nothing here mutates dyad-aule.
+# Acceptance criteria for bin/_frontier — deriving the board from the plan-cache (post issues-as-home
+# flip, N11/N16). Node state is the STORED status:* lane, read from .dyad-state/plan-cache/. Behavior
+# is proven in a THROWAWAY fixture (bare origin + work clone, file:// — no network) exercising the
+# actionable-vs-shown rule; the real repo is asserted only on side-effect-freeness (it only prints).
 here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"
 source "$here/_lib.sh"
 cd "$repo" || exit 1
@@ -12,8 +11,7 @@ FRONTIER="$repo/bin/_frontier"
 assert "committed executable (git 100755): bin/_frontier" \
   bash -c '[ "$(git ls-files -s bin/_frontier | cut -d" " -f1)" = "100755" ]'
 
-# Fixture: five nodes covering every rule — criteria-DONE, READY, dep-BLOCKED,
-# disposition-TODO (awaiting operator), disposition-decided (DONE).
+# Fixture: a cache with one node in each lane.
 _mkfix() {
   local d; d="$(mktemp -d)"
   git init -q --bare "$d/origin.git"
@@ -21,18 +19,11 @@ _mkfix() {
   git -C "$d/work" config user.email t@t.local
   git -C "$d/work" config user.name test
   git -C "$d/work" config commit.gpgsign false
-  mkdir -p "$d/work/plan" "$d/work/criteria"
-  cat >"$d/work/plan/p.md" <<'EOF'
-NODE A deps=- done=a.sh lane=agent :: done by criteria on main
-NODE B deps=A done=b.sh lane=agent :: ready (dep done, own criteria absent)
-NODE C deps=B done=c.sh lane=agent :: blocked (dep not done)
-NODE D deps=A done=disposition lane=operator :: awaiting the operator
-NODE E deps=- done=disposition lane=operator :: decided
-
-DISPOSITION D: TODO
-DISPOSITION E: chosen-path
-EOF
-  printf '%s\n' 'true' >"$d/work/criteria/a.sh"
+  mkdir -p "$d/work/.dyad-state/plan-cache"
+  printf 'CACHE-NODE #1 status=clarify deps=- done=a.sh :: needs sense\n'   >"$d/work/.dyad-state/plan-cache/1.md"
+  printf 'CACHE-NODE #2 status=dispose deps=#1 done=b.sh :: needs land\n'   >"$d/work/.dyad-state/plan-cache/2.md"
+  printf 'CACHE-NODE #3 status=blocked deps=#2 done=c.sh :: waiting\n'      >"$d/work/.dyad-state/plan-cache/3.md"
+  printf 'CACHE-NODE #4 status=execute deps=- done=d.sh :: in flight\n'     >"$d/work/.dyad-state/plan-cache/4.md"
   git -C "$d/work" add -A
   git -C "$d/work" commit -q -m fixture
   git -C "$d/work" branch -M main
@@ -42,31 +33,24 @@ EOF
 }
 
 d="$(_mkfix)"; w="$d/work"
-allout="$( cd "$w" && "$FRONTIER" --all )"
-front="$(  cd "$w" && "$FRONTIER" )"
+allout="$( cd "$w" && "$FRONTIER" --all --ref origin/main )"
+front="$(  cd "$w" && "$FRONTIER" --ref origin/main )"
 rm -rf "$d"
 has_all()  { printf '%s\n' "$allout" | grep -qE "$1"; }
 has_front(){ printf '%s\n' "$front"  | grep -qE "$1"; }
 no_front() { ! printf '%s\n' "$front" | grep -qE "$1"; }
 
-assert "derives DONE from criteria-on-main"            has_all '^A +DONE'
-assert "derives READY when deps are DONE"              has_all '^B +READY'
-assert "derives BLOCKED when a dep is not DONE"        has_all '^C +BLOCKED'
-assert "derives AWAITING-OPERATOR from TODO"           has_all '^D +AWAITING-OPERATOR'
-assert "derives DONE from a non-TODO disposition"      has_all '^E +DONE'
-assert "frontier lists the ready node"                 has_front '^B '
-assert "frontier lists the awaiting decision"          has_front '^D '
-assert "frontier omits DONE nodes"                     no_front '^(A|E) '
-assert "frontier omits BLOCKED nodes"                  no_front '^C '
+assert "--all shows every cached node (>=4 rows)" bash -c '[ "$(printf "%s\n" "'"$allout"'" | grep -cE "^#[0-9]+ ")" -ge 4 ]'
+assert "--all shows the stored status lane"       has_all '^#1 +clarify'
+assert "frontier lists clarify (needs d-sense)"   has_front '^#1 +clarify'
+assert "frontier lists dispose (needs d-land)"    has_front '^#2 +dispose'
+assert "frontier omits blocked"                   no_front '^#3 '
+assert "frontier omits execute (in flight)"       no_front '^#4 '
 
-# Real repo — stable-for-all-time facts only (never assert states that later nodes will change).
-realout="$("$FRONTIER" --all 2>&1)"
-has_real() { printf '%s\n' "$realout" | grep -qE "$1"; }
-real_rows(){ [ "$(printf '%s\n' "$realout" | grep -cE '^N[0-9]+ ')" -ge 10 ]; }
-assert "real plan: runs clean and derives N0 DONE"     has_real '^N0 +DONE'
-assert "real plan: every node derived (>=10 rows)"     real_rows
+# Real repo — side-effect-free: _frontier only prints (nothing here mutates dyad-aule); runs clean.
+assert "real: _frontier runs clean (exit 0)"      bash -c '"'"$FRONTIER"'" --all >/dev/null 2>&1'
 
 # The d-start seam: surfaced in the session report (diagnose-only run — side-effect-free).
-assert "d-start surfaces the Plan seam"                bash -c 'DYAD_DSTART_DIAGNOSE_ONLY=1 ./bin/d-start 2>&1 | grep -q "^Plan"'
+assert "d-start surfaces the Plan seam"           bash -c 'DYAD_DSTART_DIAGNOSE_ONLY=1 ./bin/d-start 2>&1 | grep -q "^Plan"'
 
 assert_done
