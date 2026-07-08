@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# bin/_node — the issue-as-node schema + intake (plan node N13; the issues-as-home flip, N11).
+#
+# WHAT: after N11 ruled issues-as-home, a GitHub ISSUE is the durable form of a plan-node. This tool
+#   defines and enforces the STATIC schema of a node-issue, and mints new ones. Dynamic rules — which
+#   status transitions are legal, and drift vs. derived ground — are N14's state-guard, NOT here.
+#   Clean split: N13 answers "is this a well-formed node?"; N14 answers "is this a legal move?".
+#
+# THE SCHEMA (a node-issue):
+#   - identity : the issue NUMBER is the node id (chiron-style; e.g. #42). Minted on create.
+#   - title    : the node title (short).
+#   - body     : free-prose intent, plus two machine-parseable lines:
+#         Depends-on: #12, #13        (edges; omit or "-" for a root node)
+#         Done: <criteria-file>.sh    (or)  Done: disposition
+#   - labels   : EXACTLY ONE status:* lane (clarify|dispose|execute|blocked); a CLOSED issue = done.
+#                other axes (stream, etc.) live in their own label families (axis-separation).
+#
+# WHY static-only here (fidelity): the schema check is PURE (body text + label list in, pass/fail
+#   out) so criteria/issue-node-schema.sh proves it in a fixture with NO network. Live GitHub I/O is
+#   quarantined in `create`.
+#
+# SUBCOMMANDS:
+#   parse-body [<file|->]                     # emit  deps=<csv|->  and  done=<val>  (PURE)
+#   validate --body <file|-> --labels <csv>   # exit 0 iff the node-issue conforms (PURE)
+#   create --title T [--depends "#a,#b"] --done X --status S   # mint a node-issue (gh I/O)
+set -uo pipefail
+
+STATUSES="clarify dispose execute blocked"   # the open lifecycle lanes (closed = done)
+
+_body_src() { # read the body from a file or stdin ("-")
+  if [ "${1:-}" = "-" ] || [ -z "${1:-}" ]; then cat; else cat "$1"; fi
+}
+
+# Parse the two schema lines from a body on stdin. Emits deps= and done= (deps "-" if none).
+_parse() {
+  local body deps donecond
+  body="$(cat)"
+  deps="$(printf '%s\n' "$body" | grep -E '^Depends-on:' | head -1 | sed 's/^Depends-on:[[:space:]]*//')"
+  [ -z "$deps" ] && deps="-"
+  donecond="$(printf '%s\n' "$body" | grep -E '^Done:' | head -1 | sed 's/^Done:[[:space:]]*//')"
+  printf 'deps=%s\n' "$deps"
+  printf 'done=%s\n' "$donecond"
+}
+
+# Validate static conformance. Args: body-text (stdin) + labels csv. Prints the first violation.
+_validate() { # _validate <labels-csv>  (body on stdin)
+  local labels="$1" body deps donecond n
+  body="$(cat)"
+
+  # exactly one status:* lane, from the known set
+  n=0
+  for l in $(printf '%s' "$labels" | tr ',' ' '); do
+    case "$l" in status:*)
+      case " $STATUSES " in *" ${l#status:} "*) n=$((n+1)) ;;
+        *) echo "unknown status lane: $l (want one of: $STATUSES)"; return 1 ;;
+      esac ;;
+    esac
+  done
+  [ "$n" -eq 1 ] || { echo "want exactly one status:* label, found $n"; return 1; }
+
+  # Done: line present and well-formed
+  donecond="$(printf '%s\n' "$body" | grep -E '^Done:' | head -1 | sed 's/^Done:[[:space:]]*//')"
+  [ -n "$donecond" ] || { echo "missing 'Done:' line"; return 1; }
+  printf '%s' "$donecond" | grep -qE '^([a-z0-9][a-z0-9-]*\.sh|disposition)$' \
+    || { echo "malformed Done: '$donecond' (want <criteria>.sh or disposition)"; return 1; }
+
+  # Depends-on: optional; if present every entry is #<n>
+  deps="$(printf '%s\n' "$body" | grep -E '^Depends-on:' | head -1 | sed 's/^Depends-on:[[:space:]]*//')"
+  if [ -n "$deps" ] && [ "$deps" != "-" ]; then
+    for d in $(printf '%s' "$deps" | tr ',' ' '); do
+      printf '%s' "$d" | grep -qE '^#[0-9]+$' || { echo "malformed dep '$d' (want #<number>)"; return 1; }
+    done
+  fi
+  return 0
+}
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift || true
+case "$cmd" in
+  parse-body)
+    _body_src "${1:-}" | _parse
+    ;;
+
+  validate)
+    BODY=""; LABELS=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --body)   BODY="${2:?--body needs a value}"; shift ;;
+        --labels) LABELS="${2:-}"; shift ;;
+        *) echo "usage: _node validate --body <file|-> --labels <csv>" >&2; exit 2 ;;
+      esac; shift
+    done
+    _body_src "$BODY" | _validate "$LABELS"
+    ;;
+
+  create)
+    command -v gh >/dev/null 2>&1 || { echo "_node: gh not found (create needs gh)." >&2; exit 127; }
+    TITLE=""; DEPENDS=""; DONE=""; STATUS=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --title)   TITLE="${2:?}"; shift ;;
+        --depends) DEPENDS="${2:-}"; shift ;;
+        --done)    DONE="${2:?}"; shift ;;
+        --status)  STATUS="${2:?}"; shift ;;
+        *) echo "usage: _node create --title T [--depends '#a,#b'] --done X --status S" >&2; exit 2 ;;
+      esac; shift
+    done
+    [ -n "$TITLE" ] && [ -n "$DONE" ] && [ -n "$STATUS" ] || { echo "_node create: --title/--done/--status required" >&2; exit 2; }
+    body="$(printf 'Intent: (fill in — the node body IS its complete brief).\n\nDepends-on: %s\nDone: %s\n' "${DEPENDS:--}" "$DONE")"
+    # validate BEFORE minting — never create a malformed node-issue
+    printf '%s' "$body" | _validate "status:$STATUS" >&2 || { echo "_node create: refusing to mint a non-conforming node-issue" >&2; exit 1; }
+    gh label create "status:$STATUS" --color ededed --force >/dev/null 2>&1 || true
+    gh issue create --title "$TITLE" --body "$body" --label "status:$STATUS"
+    ;;
+
+  ""|-h|--help) sed -n '2,30p' "$0" >&2; exit 0 ;;
+  *) echo "_node: unknown subcommand '$cmd' (see: _node --help)" >&2; exit 2 ;;
+esac
