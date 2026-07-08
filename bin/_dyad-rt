@@ -55,24 +55,36 @@ _branch_of_ref() {
   echo "${r#refs/heads/}" # drop the refs/heads/ prefix if present
 }
 
-# Does node <id> exist in plan/*.md — at ref $2 when given, else in the working tree (the
-# commit-msg floor resolves against the tree being committed; replanning commits that ADD the
-# node they reference therefore resolve).
+# Does node <id> exist? Since the issues-as-home flip (N11), a node id is a GitHub issue NUMBER
+# ('#42'), resolved against the offline plan-cache (.dyad-state/plan-cache/<n>.md, N15) so the check
+# stays check-reachable and network-free. Legacy 'Nk' ids (pre-migration history + in-flight
+# migration commits) still resolve against plan/*.md while it exists. At ref $2 when given, else the
+# working tree (the commit-msg floor resolves against the tree being committed).
 _plan_has_node() {
-  local id="$1" ref="${2:-}" f
-  {
-    if [ -n "$ref" ]; then
-      for f in $(git ls-tree -r --name-only "$ref" -- plan/ 2>/dev/null | grep '\.md$'); do
-        git show "$ref:$f" 2>/dev/null
-      done
-    else
-      cat plan/*.md 2>/dev/null
-    fi
-  } | awk -v id="$id" '$1=="NODE" && $2==id{found=1} END{exit !found}'
+  local id="$1" ref="${2:-}" f n
+  case "$id" in
+    \#[0-9]*)                                   # issue-number id → the plan-cache (state-capture)
+      n="${id#\#}"
+      if [ -n "$ref" ]; then git cat-file -e "$ref:.dyad-state/plan-cache/$n.md" 2>/dev/null
+      else [ -f ".dyad-state/plan-cache/$n.md" ]; fi
+      ;;
+    *)                                          # legacy Nk id → plan/*.md while it exists
+      {
+        if [ -n "$ref" ]; then
+          for f in $(git ls-tree -r --name-only "$ref" -- plan/ 2>/dev/null | grep '\.md$'); do
+            git show "$ref:$f" 2>/dev/null
+          done
+        else
+          cat plan/*.md 2>/dev/null
+        fi
+      } | awk -v id="$id" '$1=="NODE" && $2==id{found=1} END{exit !found}'
+      ;;
+  esac
 }
 
-# Extract the first 'Node: <id>' trailer from stdin; empty if none.
-_node_trailer() { grep -E '^Node: *[A-Za-z0-9_-]+ *$' | head -1 | sed -e 's/^Node: *//' -e 's/ *$//'; }
+# Extract the first 'Node: <id>' trailer from stdin; empty if none. Accepts the '#<issue>' form
+# (issues-as-home) and the legacy bare id.
+_node_trailer() { grep -E '^Node: *#?[A-Za-z0-9_-]+ *$' | head -1 | sed -e 's/^Node: *//' -e 's/ *$//'; }
 
 # True (0) iff the path list on stdin contains at least one path OUTSIDE .dyad-state/ —
 # i.e., the commit is an ARTIFACT mutation, not state capture (op-provenance carve-out).
