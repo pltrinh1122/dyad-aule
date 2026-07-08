@@ -27,12 +27,13 @@ done
 CACHE=".dyad-state/plan-cache"
 
 # CACHE-NODE lines at REF (the ratified projection); fall back to the working tree if REF is
-# unresolvable here (fresh CI checkouts), with a visible note.
+# unresolvable here (fresh CI checkouts), with a visible note. `git grep -h` at the ref is a single
+# portable command — no ls-tree/word-split/`git show` path construction (which regressed on Windows).
 if git rev-parse --verify -q "$REF^{commit}" >/dev/null 2>&1; then
-  SRC="$(for f in $(git ls-tree -r --name-only "$REF" -- "$CACHE" 2>/dev/null | grep '\.md$'); do git show "$REF:$f" 2>/dev/null; done | grep -E '^CACHE-NODE ' || true)"
+  SRC="$(git grep -h -E '^CACHE-NODE ' "$REF" -- "$CACHE" 2>/dev/null || true)"
 else
   echo "· reading working-tree cache ($REF unresolvable here)"
-  SRC="$(cat "$CACHE"/*.md 2>/dev/null | grep -E '^CACHE-NODE ' || true)"
+  SRC="$(grep -h -E '^CACHE-NODE ' "$CACHE"/*.md 2>/dev/null || true)"
 fi
 
 if ! printf '%s' "$SRC" | grep -q .; then
