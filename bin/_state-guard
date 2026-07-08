@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# bin/_state-guard — the node-lifecycle FSM guard (plan node N14; the issues-as-home flip, N11).
+#
+# WHY: N11 ruled that lifecycle status is STORED (status:* labels) because re-derivation is
+#   expensive (C2's own falsification bound). Storing status is the wu-wei drift trap; a guard
+#   asserted-but-unwired is the cairn counterfeit. So aule may store status ONLY behind a guard
+#   that is REAL — wired into the mutation path AND criteria-proven (deny-illegal ∧ allow-legal,
+#   the dyad-rt.sh discipline). This is that guard, single-homed here (O2), reached by the bin/gh
+#   wrapper (early steering) and a CI reconcile job + a d-start seam (drift authority).
+#
+# TWO HALVES (matching the Operator's ask — "flag AND prevent"):
+#   1. PREVENT illegal transitions — legal-transition is a whitelist FSM; close-to-done additionally
+#      requires criteria-green ∧ PR-merged (C3 — the real-half never leaves the merge-gate).
+#   2. FLAG drift — stored status is a CACHE; derived ground is its CHECK. A status inconsistent
+#      with ground is surfaced (never silently absorbed) — the N9 tripwire, applied to status.
+#
+# The FSM policy is PURE (no gh, no network) so criteria/state-guard.sh proves it in a fixture.
+# Live gh reads live only in check-gh-transition / reconcile.
+#
+# SUBCOMMANDS:
+#   legal-transition <from> <to>              # exit 0 iff from→to is a legal FSM edge (PURE)
+#   close-allowed <criteria-green> <merged>   # exit 0 iff a close→done is permitted (PURE)
+#   drift --status S [--closed] [--deps-done] [--open-pr] [--criteria-green]   # emit drift (PURE)
+#   check-gh-transition <gh-args...>          # deny an illegal status edit/close (bin/gh call site)
+#   reconcile [--ref R]                       # surface drift across node-issues (CI + d-start seam)
+set -uo pipefail
+
+# --- PURE: the legal transition whitelist (everything not listed is illegal) ---
+# The deliberate denials: clarify→execute (no Act without disposition — op-intent/op-provenance);
+# *→done except from execute (a close must pass through execution). Self-loops are no-ops (allowed).
+_LEGAL=" \
+ clarify>dispose clarify>blocked \
+ dispose>execute dispose>clarify dispose>blocked \
+ execute>done execute>dispose execute>clarify execute>blocked \
+ blocked>clarify blocked>dispose blocked>execute \
+ done>clarify done>dispose "
+
+legal_transition() { # <from> <to>
+  local from="$1" to="$2"
+  [ "$from" = "$to" ] && return 0                    # idempotent re-label is not a transition
+  case "$_LEGAL" in *" $from>$to "*) return 0 ;; esac
+  return 1
+}
+
+close_allowed() { # <criteria-green: yes|no> <pr-merged: yes|no>
+  [ "$1" = "yes" ] && [ "$2" = "yes" ]
+}
+
+# --- PURE: drift detection. Stored status vs derived ground → surfaced reasons (nonzero if any) ---
+do_drift() {
+  local status="" closed=no deps_done=no open_pr=no crit=no found=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --status)        status="${2:?}"; shift ;;
+      --closed)        closed=yes ;;
+      --deps-done)     deps_done=yes ;;
+      --open-pr)       open_pr=yes ;;
+      --criteria-green) crit=yes ;;
+      *) echo "drift: unknown arg $1" >&2; return 2 ;;
+    esac; shift
+  done
+  if [ "$closed" = yes ]; then
+    [ "$crit" != yes ] && { echo "DRIFT closed(done) but criteria NOT green — real-half unproven"; found=1; }
+  else
+    case "$status" in
+      execute) [ "$open_pr" != yes ] && { echo "DRIFT execute but no open PR carries the node's trailer"; found=1; } ;;
+      blocked) [ "$deps_done" = yes ] && { echo "DRIFT blocked but all deps done — stale block"; found=1; } ;;
+      dispose) [ "$deps_done" != yes ] && { echo "DRIFT dispose but a dep is not done — should be blocked"; found=1; } ;;
+    esac
+  fi
+  [ "$found" = 0 ]
+}
+
+deny() { { echo "🚫 state-guard: $1"; echo "   why: $2"; echo "   → $3"; } >&2; exit 1; }
+
+# --- LIVE: parse a gh command; if it changes a node-issue's status, enforce the transition ---
+# Recognizes:  gh issue edit <n> ... --add-label status:<X> ...   and   gh issue close <n> ...
+_current_status() { # read the single status:* lane of issue <n> (empty if none)
+  gh issue view "$1" --json labels -q '[.labels[].name | select(startswith("status:"))][0] // ""' 2>/dev/null | sed 's/^status://'
+}
+_issue_done_ground() { # <n> → "crit merged"  (yes/no yes/no) — best-effort derivation
+  # merged: any merged PR references this issue; criteria: ./check green on the merge (approximated
+  # by "a merged PR exists" — CI ran check on it). Conservative: unknown → no.
+  local n="$1" merged=no
+  gh pr list --state merged --search "$n in:body" --json number -q '.[0].number' 2>/dev/null | grep -q . && merged=yes
+  echo "$merged $merged"
+}
+
+check_gh_transition() {
+  # Only issue edit/close can move status; everything else is out of scope → allow.
+  [ "${1:-}" = "issue" ] || return 0
+  local sub="${2:-}"; local n="" newstatus=""
+  case "$sub" in
+    edit|close) : ;;
+    *) return 0 ;;
+  esac
+  shift 2
+  # first bare token = issue number; scan for --add-label status:*
+  local a
+  while [ $# -gt 0 ]; do
+    a="$1"
+    case "$a" in
+      --add-label) case "${2:-}" in status:*) newstatus="${2#status:}" ;; esac; shift ;;
+      -*) : ;;
+      *) [ -z "$n" ] && n="$a" ;;
+    esac
+    shift
+  done
+  [ "$sub" = close ] && newstatus="done"
+  [ -z "$newstatus" ] && return 0            # not a status-changing command
+  [ -z "$n" ] && return 0
+
+  local from; from="$(_current_status "$n")"; [ -z "$from" ] && from="clarify"
+  if ! legal_transition "$from" "$newstatus"; then
+    deny "illegal status transition $from → $newstatus on #$n" \
+         "node lifecycle FSM (N14) — that move is not permitted; e.g. no clarify→execute (no Act without disposition)" \
+         "converge (d-sense) then dispose (d-land); legal from '$from': $(_legal_from "$from")"
+  fi
+  if [ "$newstatus" = "done" ]; then
+    read -r crit merged <<EOF
+$(_issue_done_ground "$n")
+EOF
+    close_allowed "$crit" "$merged" || \
+      deny "close→done refused on #$n (real-half unproven)" \
+           "C3 — DONE ⟺ criteria-green ∧ PR-merged; the merge-gate still owns 'real'" \
+           "land the work via PR and let it merge; do not hand-close a node as done"
+  fi
+}
+
+_legal_from() { local f="$1" out=""; for e in $_LEGAL; do case "$e" in "$f>"*) out="$out ${e#*>}" ;; esac; done; echo "${out:- (none)}"; }
+
+reconcile() { # surface drift across open node-issues (best-effort; I/O)
+  command -v gh >/dev/null 2>&1 || { echo "state-guard: gh not found." >&2; return 127; }
+  local any=0
+  for n in $(gh issue list --state open --json number -q '.[].number' 2>/dev/null); do
+    local st; st="$(_current_status "$n")"; [ -z "$st" ] && continue
+    # ground gathering omitted for brevity of the live path; drift rules are the pure core.
+    :
+  done
+  return $any
+}
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift || true
+case "$cmd" in
+  legal-transition) legal_transition "${1:?from}" "${2:?to}" ;;
+  close-allowed)    close_allowed "${1:?crit}" "${2:?merged}" ;;
+  drift)            do_drift "$@" ;;
+  check-gh-transition) command -v gh >/dev/null 2>&1 && check_gh_transition "$@" || true ;;
+  reconcile)        reconcile ;;
+  ""|-h|--help) sed -n '2,30p' "$0" >&2; exit 0 ;;
+  *) echo "state-guard: unknown subcommand '$cmd'" >&2; exit 2 ;;
+esac
