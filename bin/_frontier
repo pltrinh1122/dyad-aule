@@ -1,25 +1,18 @@
 #!/usr/bin/env bash
-# bin/_frontier — derive plan-node state from ground (plan node N1's mechanism; op-queue).
+# bin/_frontier — derive the activity board from the plan-cache (post issues-as-home flip, N11/N16).
 #
-# WHY: the plan (plan/*.md) holds intent and edges ONLY — completion is never stored (C3: a
-#   stored status-pointer structurally drifts; the wu-wei scars). This tool derives each node's
-#   state from the ground every time it runs, so "what's next" is always a fresh read, never a
-#   remembered claim. It is READ-ONLY: no fetch, no write, no state file.
+# WHY: nodes now live as GitHub issues (N11). Node state is the STORED status:* lane (N11 ruled it
+#   stored, because re-derivation is expensive — C2's own bound — and guarded by the N14 FSM). This
+#   tool reads the OFFLINE plan-cache (.dyad-state/plan-cache/<n>.md, N15 — the check-reachable
+#   projection of the issue truth), so "what needs me?" is a fresh read with no network. It PRINTS;
+#   acting on a node stays a disposition (auto-trigger ≠ auto-judgment).
 #
-# DERIVATION (the queue's contract, plan/close-the-gaps.md):
-#   done=<file>.sh   → DONE ⟺ criteria/<file> is tracked at REF (CI runs ./check on every merge,
-#                      so presence-on-main carries check-green with it)
-#   done=disposition → DONE ⟺ the plan's "DISPOSITION <id>:" line at REF is non-TODO
-#   READY  ⟺ not DONE and every dep is DONE (shown AWAITING-OPERATOR when lane=operator)
-#   BLOCKED⟺ not DONE and some dep is not DONE
+# The actionable frontier = nodes awaiting the Operator: status:clarify (needs d-sense) and
+# status:dispose (needs d-land). --all shows every cached node with its stored status.
 #
-# REF defaults to origin/main (truth is remote-grounded); falls back to HEAD with a visible note
-# when origin/main is unresolvable (fresh CI checkouts). Surfaced, never auto-executed: this tool
-# prints; picking a node stays a disposition (auto-trigger ≠ auto-judgment).
-#
-# Usage:  bin/_frontier               # print the frontier (READY + AWAITING-OPERATOR nodes)
-#         bin/_frontier --all         # print every node with its derived state
-#         bin/_frontier --ref <ref>   # derive against another ref (fixtures, CI)
+# Usage:  bin/_frontier            # the actionable frontier
+#         bin/_frontier --all      # every cached node
+#         bin/_frontier --ref R    # read the cache at another ref (fixtures, CI)
 set -uo pipefail
 
 REF="origin/main"; ALL=0
@@ -31,61 +24,29 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+CACHE=".dyad-state/plan-cache"
 
-if ! git rev-parse --verify -q "$REF^{commit}" >/dev/null 2>&1; then
-  echo "· deriving from HEAD ($REF unresolvable here)"
-  REF="HEAD"
+# CACHE-NODE lines at REF (the ratified projection); fall back to the working tree if REF is
+# unresolvable here (fresh CI checkouts), with a visible note.
+if git rev-parse --verify -q "$REF^{commit}" >/dev/null 2>&1; then
+  SRC="$(for f in $(git ls-tree -r --name-only "$REF" -- "$CACHE" 2>/dev/null | grep '\.md$'); do git show "$REF:$f" 2>/dev/null; done | grep -E '^CACHE-NODE ' || true)"
+else
+  echo "· reading working-tree cache ($REF unresolvable here)"
+  SRC="$(cat "$CACHE"/*.md 2>/dev/null | grep -E '^CACHE-NODE ' || true)"
 fi
 
-# All NODE / DISPOSITION lines from every tracked plan file AT REF (never the working tree —
-# the ground is the ratified plan, not an in-flight edit).
-plan_files() { git ls-tree -r --name-only "$REF" -- plan/ 2>/dev/null | grep '\.md$'; }
-NODESRC=""; DISPSRC=""
-for f in $(plan_files); do
-  NODESRC="$NODESRC$(git show "$REF:$f" 2>/dev/null | grep -E '^NODE ' || true)
-"
-  DISPSRC="$DISPSRC$(git show "$REF:$f" 2>/dev/null | grep -E '^DISPOSITION ' || true)
-"
-done
-if ! printf '%s' "$NODESRC" | grep -q .; then
-  echo "· no plan nodes found at $REF (plan/*.md)"
+if ! printf '%s' "$SRC" | grep -q .; then
+  echo "· no node-cache at $REF (run: bin/_cache sync-down)"
   exit 0
 fi
 
-node_field() { # node_field <id> <col#> <prefix>  → e.g. node_field N1 3 deps=
-  printf '%s\n' "$NODESRC" | awk -v id="$1" -v c="$2" -v p="$3" '$1=="NODE" && $2==id {sub("^"p,"",$c); print $c; exit}'
-}
-
-is_done() {
-  local id="$1" cond
-  cond="$(node_field "$id" 4 'done=')"
-  if [ "$cond" = "disposition" ]; then
-    printf '%s\n' "$DISPSRC" | grep -E "^DISPOSITION $id:" | grep -qv 'TODO'
-  else
-    git cat-file -e "$REF:criteria/$cond" 2>/dev/null
-  fi
-}
-
-DONESET=" "
-for id in $(printf '%s\n' "$NODESRC" | awk '$1=="NODE"{print $2}'); do
-  is_done "$id" && DONESET="$DONESET$id "
-done
-
-printf '%s\n' "$NODESRC" | grep -E '^NODE ' | while IFS= read -r line; do
-  id="$(printf '%s\n' "$line" | awk '{print $2}')"
-  deps="$(printf '%s\n' "$line" | awk '{sub(/^deps=/,"",$3); print $3}')"
-  lane="$(printf '%s\n' "$line" | awk '{sub(/^lane=/,"",$5); print $5}')"
-  title="${line#* :: }"
-  state="READY"
-  case "$DONESET" in *" $id "*) state="DONE" ;; esac
-  if [ "$state" != "DONE" ] && [ "$deps" != "-" ]; then
-    for d in $(printf '%s' "$deps" | tr ',' ' '); do
-      case "$DONESET" in *" $d "*) : ;; *) state="BLOCKED" ;; esac
-    done
-  fi
-  [ "$state" = "READY" ] && [ "$lane" = "operator" ] && state="AWAITING-OPERATOR"
-  if [ "$ALL" = 1 ] || [ "$state" = "READY" ] || [ "$state" = "AWAITING-OPERATOR" ]; then
-    printf '%-4s %-17s %-8s :: %s\n' "$id" "$state" "$lane" "$title"
+printf '%s\n' "$SRC" | while IFS= read -r l; do
+  id="$(printf '%s\n' "$l" | awk '{print $2}')"
+  status="$(printf '%s\n' "$l" | awk '{sub(/^status=/,"",$3); print $3}')"
+  title="${l#*:: }"
+  case "$status" in clarify|dispose) act=1 ;; *) act=0 ;; esac
+  if [ "$ALL" = 1 ] || [ "$act" = 1 ]; then
+    printf '%-6s %-9s :: %s\n' "$id" "$status" "$title"
   fi
 done
 exit 0

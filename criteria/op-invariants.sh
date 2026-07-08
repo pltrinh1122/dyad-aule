@@ -22,14 +22,14 @@ assert "anchor pins the overflow to python3-stdlib"      grep -qF 'python3-stdli
 # --- op-queue: anchored + enforced (plan/ home, contract, shape criteria) ---
 assert "anchor names op-queue"                           grep -qF 'op-queue' "$A"
 assert "anchor states turn is not the unit of execution" grep -qiE 'chat-turn is not the unit of execution' "$A"
-assert "enforced: plan kind-home with contract exists"   test -f plan/close-the-gaps.md
-assert "enforced: DAG shape criteria exist"              test -f criteria/plan-dag.sh
+assert "enforced: node home is the plan-cache (issues-as-home, N11)" test -d .dyad-state/plan-cache
+assert "enforced: node schema + FSM guard criteria exist" bash -c "test -f criteria/issue-node-schema.sh && test -f criteria/state-guard.sh"
 assert "anchor keeps WIP=1 (time, not workers)"          bash -c "grep -qF 'op-queue' '$A' && grep -qiE 'decouples.*time.*not.*workers' '$A'"
 
 # --- op-SoT: anchored + the inbox rule in vocabulary ---
 assert "anchor names op-SoT"                             grep -qF 'op-SoT' "$A"
 assert "vocabulary carries 'inbox, never truth'"         grep -qF 'inbox, never truth' "$A"
-assert "plan records the issues decision (the source)"   grep -qF 'Inbox, never truth' plan/close-the-gaps.md
+assert "the plan-home decision record exists (issues-as-home)" test -f dialectic/2026-07-08-plan-home-local-vs-issues.md
 
 # --- op-intent: anchored (survivor wording) + its record carries the falsification ---
 assert "anchor names op-intent"                          grep -qF 'op-intent' "$A"
