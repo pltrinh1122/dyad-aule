@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# bin/_cache — the issues→local-cache mirror (plan node N15; the issues-as-home flip, N11).
+#
+# WHY: N11 ruled issues-as-home with offline demoted to "operate like a cache." Truth now lives in
+#   GitHub issues; this syncs the node-issues DOWN into a local, git-tracked cache so the practice
+#   survives the rare offline case and local ./check has a ground to read plan-shape from. It is the
+#   REVERSE of N9's mirror (which pushed files→issues); here issues(truth)→cache(view).
+#
+# THE CACHE IS OBSERVE-PHASE CAPTURE, NEVER A WRITER (op-provenance carve-out):
+#   home = .dyad-state/plan-cache/ → a commit touching ONLY it is state-capture, provenance-exempt.
+#   The cache is derived + disposable; it is regenerated from issues, never authored. Drift between
+#   cache and issues is closed by the next sync (the N9 tripwire, inverted) — the cache never writes
+#   back to the issue truth.
+#
+# The record→cache transform is PURE (TSV in → cache text out), so criteria/cache-mirror.sh proves
+# it with NO network. Live gh reads live only in sync-down.
+#
+# SUBCOMMANDS:
+#   render                       # stdin: TSV <number>\t<state>\t<status>\t<deps>\t<done>\t<title>
+#                                #        (one node-issue per line) → cache text on stdout (PURE)
+#   sync-down [--dir D] [--dry-run]   # gh → cache files under D (default .dyad-state/plan-cache)
+set -uo pipefail
+
+CACHE_DIR_DEFAULT=".dyad-state/plan-cache"
+
+# PURE: TSV records → cache blocks. Uses awk -F'\t' (NOT `read`, whose IFS-whitespace
+# collapsing would drop empty fields and shift columns). A closed issue renders status=done.
+render() {
+  awk -F'\t' '
+    $1=="" { next }
+    {
+      status=$3
+      if ($2=="closed") status="done"
+      if (status=="") status="clarify"
+      deps=($4=="")?"-":$4
+      dcond=($5=="")?"-":$5
+      printf "CACHE-NODE #%s status=%s deps=%s done=%s :: %s\n", $1, status, deps, dcond, $6
+    }'
+}
+
+# LIVE: gather node-issues via gh, render, write one file per node into the cache dir.
+sync_down() {
+  local dir="$CACHE_DIR_DEFAULT" dry=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --dir) dir="${2:?}"; shift ;;
+      --dry-run) dry=1 ;;
+      *) echo "usage: _cache sync-down [--dir D] [--dry-run]" >&2; return 2 ;;
+    esac; shift
+  done
+  command -v gh >/dev/null 2>&1 || { echo "_cache: gh not found (sync-down needs gh)." >&2; return 127; }
+
+  # A node-issue carries exactly one status:* label (schema N13); the body carries Depends-on:/Done:.
+  # Flatten to TSV via gh's embedded --jq (no external vendor). Non-node issues (no status:*) skip.
+  local tsv
+  tsv="$(gh issue list --state all --limit 500 \
+      --json number,state,title,body,labels \
+      --jq '.[]
+        | ([.labels[].name | select(startswith("status:"))][0]) as $s
+        | select($s != null)
+        | [ (.number|tostring), .state, ($s|ltrimstr("status:")),
+            ((.body | capture("(?m)^Depends-on:[ ]*(?<d>.*)$").d) // "-"),
+            ((.body | capture("(?m)^Done:[ ]*(?<x>.*)$").x) // "-"),
+            .title ] | @tsv' 2>/dev/null || true)"
+
+  if [ "$dry" = 1 ]; then
+    echo "── cache sync-down (dry-run) → $dir ──"
+    printf '%s\n' "$tsv" | render
+    return 0
+  fi
+
+  mkdir -p "$dir"
+  # regenerate: drop stale cache files, rewrite from truth (the cache is disposable)
+  find "$dir" -name '*.md' -type f -delete 2>/dev/null || true
+  printf '%s\n' "$tsv" | while IFS=$'\t' read -r num rest; do
+    [ -z "$num" ] && continue
+    printf '%s\t%s\n' "$num" "$rest" | render >"$dir/$num.md"
+  done
+  echo "cache: synced $(find "$dir" -name '*.md' | wc -l | tr -d ' ') node(s) → $dir (state-capture; not truth)"
+}
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift || true
+case "$cmd" in
+  render)    render ;;
+  sync-down) sync_down "$@" ;;
+  ""|-h|--help) sed -n '2,24p' "$0" >&2; exit 0 ;;
+  *) echo "_cache: unknown subcommand '$cmd'" >&2; exit 2 ;;
+esac
